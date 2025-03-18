@@ -112,3 +112,142 @@ npm i less less-loader@8
 兼容 ie9 ie11 stable
 ```
 
+##### 六，配置跨域代理
+
+```
+在 src 目录下创建 setUpProxy.js 文件
+下载插件 http-proxy-middleware
+
+1. http-proxy-middleware2.0写法
+
+const { createProxyMiddleware } = require('http-proxy-middleware');
+module.exports = function (app) {
+    app.use(
+        createProxyMiddleware("/jian", {
+            target: "https://www.jianshu.com/asimov",
+            changeOrigin: true,
+            ws: true,
+            pathRewrite: { "^/jian": "" }
+        })
+    )
+    app.use(
+        createProxyMiddleware("/zhi", {
+            target: "https://new-at.zhihu.com/api/4",
+            changeOrigin: true,
+            ws: true,
+            pathRewrite: { "^/zhi": "" }
+        })
+    )
+}
+
+2. http-proxy-middleware3.0写法
+
+const { createProxyMiddleware } = require('http-proxy-middleware');
+module.exports = function (app) {
+    app.use(
+        '/jian',
+        createProxyMiddleware({
+            target: 'https://www.jianshu.com/asimov',
+            changeOrigin: true,
+            pathRewrite: { '^/jian': '' }
+        })
+    );
+    app.use(
+        '/zhi',
+        createProxyMiddleware({
+            target: 'https://new-at.zhihu.com/api/4',
+            changeOrigin: true,
+            pathRewrite: { '^/zhi': '' }
+        })
+    );
+}
+```
+
+##### 七，React，Vue，Anglar(NG)
+
+```
+主流思想：
+	不直接操作 DOM ，数据驱动视图更新
+	数据发生改变时，页面会刷新
+		构建了一套虚拟 DOM 到真实 DOM 的渲染体系
+		有效的避免了 DOM 的重排和重绘
+	操作 DOM 比较消耗性能(可能会导致重排重绘)
+
+React框架采用的是 MVC 体系，Vue框架采用的是 MVVM 体系
+```
+
+##### 八，MVC 
+
+```
+MVC: model数据层 + view视图层 + controller控制层
+	数据层受到改变，那么试图层则会刷新页面，试图层操作数据使得数据改变，根据需要更新数据层和试图层，作为数据层和试图层之间的桥梁，数据驱动视图来渲染，单向数据驱动
+```
+
+![](C:\Users\Admin\Desktop\2025_react\文档\MVC.png)
+
+##### 九，MVVM
+
+```
+MVVM：model数据层 + vew视图层 + viewModel数据/视图监听层
+	不管数据层还是视图层发生改变，都会通知另一方，数据驱动视图来渲染，视图也可以驱动数据来更改，双驱动
+```
+
+![](C:\Users\Admin\Desktop\2025_react\文档\MVVM.png)
+
+##### 十，JSX构建视图
+
+```
+JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX 可以同时写 js 表达式和 HTML 标签
+
+{number/string} : 值是啥，渲染啥
+{boolean/undefined/null/Symbol/BigInt} : 空
+{对象/正则/日期对象/函数} : 不支持
+{数组} ： 渲染数组中的每一项
+
+行内样式：需要基于对象格式处理，样式属性基于驼峰命名法
+样式类名：class 替换成 className
+注释：  {/*  */}
+```
+
+##### 十一，React 渲染流程
+
+```
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

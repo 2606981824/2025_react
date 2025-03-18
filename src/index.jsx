@@ -11,7 +11,18 @@ import '@/index.less';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   // React.StrictMode react 语法严格模式
-  <React.StrictMode> 
+  <React.StrictMode>
     <div>React</div>
   </React.StrictMode>
 );
+
+
+fetch('/jian/subscription/recommended_collections')
+  .then(response => {
+    console.log(response)
+  })
+  
+fetch('/zhi/news/latest')
+.then(response => {
+  console.log(response)
+})
