@@ -96,9 +96,19 @@ npm i less less-loader@8
 	
 通过环境变量修改
 下载插件 npm i cross-env
-在package.json文件找到 "scripts"
+在package.json文件找到 scripts 启动命令处
 	"start": "node scripts/start.js",
 	替换
 	"start": "cross-env  PORT=8080 node scripts/start.js",
+```
+
+##### 五，修改浏览器兼容
+
+```
+在 index.jsx 入口文件添加
+	import 'react-app-polyfill/ie9';
+	import 'react-app-polyfill/ie11';
+	import 'react-app-polyfill/stable';
+兼容 ie9 ie11 stable
 ```
 
