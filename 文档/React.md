@@ -4,6 +4,7 @@
 
 ```vue
 命令 npx create-react-app 项目名称
+package.json文件配置
   "name": "2025_react",
   "version": "0.1.0",
   "private": true,
@@ -81,5 +82,23 @@ npm i less less-loader@8
 
 ```
 找到 webpackEnv 函数，找到 resolve 模块里面的 alias 对象，添加 '@':paths.appSrc
+```
+
+##### 四，修改启动域名和端口号
+
+```
+在 start.js 文件中找到
+	const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 3000;
+	const HOST = process.env.HOST || '0.0.0.0';
+	替换
+	const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 8080;
+	const HOST = process.env.HOST || '127.0.0.1';
+	
+通过环境变量修改
+下载插件 npm i cross-env
+在package.json文件找到 "scripts"
+	"start": "node scripts/start.js",
+	替换
+	"start": "cross-env  PORT=8080 node scripts/start.js",
 ```
 
