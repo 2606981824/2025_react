@@ -25,5 +25,55 @@
     ],
   }
 
+命令 treer -i "node_modules" 获取项目文件树
+├─package-lock.json
+├─package.json
+├─README.md
+├─文档
+| └React.md
+├─src
+|  └index.js
+├─scripts
+|    ├─build.js  							后期执行相关打包命令的入口文件
+|    ├─start.js
+|    └test.js
+├─public
+|   ├─favicon.ico
+|   └index.html
+├─config
+|   ├─env.js
+|   ├─getHttpsConfig.js
+|   ├─modules.js
+|   ├─paths.js                              打包中需要的一些路径
+|   ├─webpack.config.js					 	webpack 配置
+|   ├─webpackDevServer.config.js 			webpack-dev-serve配置
+|   ├─webpack
+|   |    ├─persistentCache
+|   |    |        └createEnvironmentHash.js
+|   ├─jest
+|   |  ├─babelTransform.js
+|   |  ├─cssTransform.js
+|   |  └fileTransform.js
+```
+
+##### 二，配置 less less-loader 插件
 
 ```
+npm i less less-loader@8
+在webpack.config.js配置less less-loadder插件
+找到原来 sass 处理器位置修改成 less
+1. const sassRegex = /\.(scss|sass)$/;
+   const sassModuleRegex = /\.module\.(scss|sass)$/;
+   替换
+   const lessRegex = /\.less$/;
+   const lessModuleRegex = /\.module\.less$/;
+2. 找到 webpackEnv 函数，找到 module 
+   sassRegex
+   sassModuleRegex
+   'sass-loader'
+   替换
+   lessRegex
+   lessModuleRegex
+   'less-loader'
+```
+
