@@ -67,7 +67,7 @@ npm i less less-loader@8
    替换
    const lessRegex = /\.less$/;
    const lessModuleRegex = /\.module\.less$/;
-2. 找到 webpackEnv 函数，找到 module 
+2. 找到 webpackEnv 函数，找到 module 模块
    sassRegex
    sassModuleRegex
    'sass-loader'
@@ -75,5 +75,11 @@ npm i less less-loader@8
    lessRegex
    lessModuleRegex
    'less-loader'
+```
+
+##### 三，配置路径别名 @
+
+```
+找到 webpackEnv 函数，找到 resolve 模块里面的 alias 对象，添加 '@':paths.appSrc
 ```
 
