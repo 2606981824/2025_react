@@ -207,12 +207,366 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
 行内样式：需要基于对象格式处理，样式属性基于驼峰命名法
 样式类名：class 替换成 className
 注释：  {/*  */}
+
+
+
+
 ```
 
-##### 十一，React 渲染流程
+##### 十一，JSX底层处理机制
 
 ```
+1. 把我们编写的 JSX 语法，编译成为虚拟 DOM 对象(virtualDOM: 框架内部构建的一套对象体系，对象属性描述出视图中 DOM 节点的相关特征)
+	@1 基于 bael-peset-react-app 把 JSX 语法编译成React.createElement(...)格式
+	@2 再把 createElement 方法执行，创建虚拟 DOM
+		JSX语法
+		<div id="app">
+        	Hello, <span>world!</span>
+      	</div>
+		转换
+		React.createElement(
+			'div',
+			{
+         		id: 'app',
+      		},
+      		 "Hello,",
+         	React.createElement("span",null，world!)      
+		)
+		React.createElement函数：
+			参数1 ele：元素标签(组件)名称
+			参数2 props：元素属性对象，没有则为null
+			参数3以及后面参数 ...chilren：元素  子节点
+		React.createElement返回值：虚拟 DOM 对象(4个属性)
+			key: 循环渲染所需要的key
+			props: 存放本身的属性和以及所有子节点cjildren
+			ref: 节点或组件实例	
+			type: 标签名称
+			
+		// 手写 createElement方法 创建虚拟 DOM 对象
+ 		export function createElement(ele,props,...children){
+    		let virtualDom = {
+        		$$typeof:Symbol('react.element'),
+        		type:null,
+        		props:{},
+        		ref:null,
+        		key:null,
+    		}
+    		let len = children.length
+    		virtualDom.type = ele;
+    		if(props !== null){
+        		virtualDom.props = {
+            		...props
+        		};
+    		}
+    		if(len === 1) virtualDom.props.children = children[0]
+    		if(len > 1) virtualDom.props.children = children;
+    		return virtualDom
+		}
 
+2. 把构建的 virtualDOM 渲染为真实 DOM(真实DOM: 浏览器页面，最后渲染，用户看见的 DOM 元素)
+	React16版本：
+		React.render(
+    		<>...</>,
+        	documen.getElementById('root')
+    	)
+	React18版本：
+		const root = ReactDOM.createRoot(document.getElementById('root'));
+		root.render(
+			<>...</>
+		)
+	
+	// 手写 render 方法 把虚拟 DOM 转换成真实 DOM 16版本
+	export function render(virtualDom,container){   
+    	let { type ,props } = virtualDom;
+    	if(typeof type === 'string'){
+        	// 动态创建对应标签
+        	let ele = document.createElement(type);
+        	//  为标签设置属性和节点
+        	each(props,(value,key)=>{
+            	// clssName的处理
+            	if(key === 'className'){
+                	ele.className = value;
+                	return; 
+            	}
+            	// 样式的处理
+            	if(key === 'style'){
+                	each(value,(val,attr)=>{
+                    	ele.style[attr] = val;
+                	})
+                	return;
+            	}
+            	// 子节点处理
+            	if(key === 'children'){
+                	let children = value;
+                	if(Array.isArray(children.length)) children = [children];
+                	children.forEach(child=>{
+                    	// 子节点是文本节点
+                    	if(/^(string|number)$/.test(typeof child)){
+                        	ele.appendChild(document.createTextNode(child))
+                    	}
+                    	// 子节点是虚拟 DOM 递归
+                    	render(child,ele)
+                	})
+                	return;
+            	}
+            	ele.setAttribute(key,value)
+        	})
+        	// 把新增的标签，增加到指定容器中
+        	container.appendChild(ele)
+    	}
+	}
+	
+补充说明: 第一次渲染页面是这直接从虚拟DOM转为真实DOM，但后期更新时，需要使用diff算法对比新旧DOM的差异部分，然后重新渲染差异部分
+```
+
+![](C:\Users\Admin\Desktop\2025_react\文档\JSX渲染.png)
+
+
+
+##### 十二，封装简单对象迭代方法
+
+```
+	// 对象迭代方法 获取对象所有的 私有的，不论是否可枚举，不论类型
+	// Object.getOwnPropertyNames() 获取对象非 Symbol 类型的私有属性(无关可枚举型)
+	// Object.getOwnPropertySymbol() 获取 Symbol 类型的私有属性
+	// 获取所有的私有属性：
+	// let Keys = Object.getOwnPropertyNames(arr).concat(Object.getOwnPropertySymbol(arr))
+	// 或 let keys = Reflect.ownKeys(arr) 不兼容 IE
+	export function each(obj,callback){
+    	if(obj === null || typeof obj !== 'object') throw TypeError('obj is not a object');
+    	if(typeof callback !== 'function') throw TypeError('callback is not a function');
+    	let keys = Reflect.ownKeys(obj);
+    	keys.forEach(key =>{
+        	let value = obj[key];
+        	// 每次迭代都把回调函数执行
+        	callback(value,key)
+    	})
+	}
+```
+
+##### 十三，函数组件底层渲染机制
+
+```
+1. 基于 bael-peset-react-app 把调用的组件转换成 createElement 格式
+2. 再把 createElement 方法执行，创建虚拟 DOM
+	React.createElement(DemoOne,{
+  		title:"demo",
+  		x:10,
+  		className:"demo",
+  		style:{
+    		fontSize: "20px"
+  		}
+	})
+	转换成虚拟 DOM 对象
+	{
+		$$typeof:Symbol(react.element),
+        key:null,
+        ref:null,
+        props:{ title: "demo",
+          x: 10,
+          className: "demo",
+          style: {
+            fontSize: "20px"
+          }},
+        type:DemoOne
+	}
+3. 通过 render 方法把虚拟 DOM 变成真实 DOM
+	@1 转换过程中会把函数执行
+	@2 把虚拟 DOM 的 props 作为实参传递给函数
+	@3 最后把函数执行的返回结果基于 render 方法转为真实 DOM
+```
+
+##### 十四，函数组件 props 属性相关细节处理
+
+```
+只读，不可修改
+	对象本身可设置规则：冻结，密封，不可扩展
+	冻结：
+		Object.freeze(obj): 无法修改，无法新增，无法删除以及无法做劫持，冻结只是浅冻结，无法做到深度冻结，需要递归
+		Object.isFrozen(obj): 检查是否被冻结
+		
+	密封：
+		Obect.seal(obj): 可法新增，无法删除以及无法做劫持，密封只是浅密封，无法做到深度密封，需要递归
+		Obect.isSealed(obj): 检查是否被密封
+		
+	不可拓展：
+		Object.preventExtensions(obj): 可修改，可删除，可劫持，无法新增，也是浅不可拓展
+		Object.isExtensible(obj): 检查是否不可拓展
+		
+
+设置 props 属性规则：
+	下载插件 prop-types
+	import PropTypes from 'prop-types';
+
+	函数组件.propTypes = {
+		// 类型：字符串，必传
+    	key: PropTypes.string.isRequired,
+    	// 类型：数字，不必传
+    	key: PropTypes.number
+	}
+```
+
+##### 十五，函数组件的插槽机制
+
+```
+使用 props.children
+
+默认插槽
+	子组件：
+		function Son(props) {
+  			return (
+    			<>
+      				{props.children}
+    			</>
+  			)
+		}
+		export default Son
+	父组件：
+		import Son from "./Son";
+		function Father() {
+  			return (
+    			<>
+      				<Son>
+        				<div>123</div>
+      				</Son>
+      				<Son>
+        				<div>123</div>
+        				<div>456</div>
+      				</Son>
+    			</>
+  			)
+		}
+		export default Father
+
+对 props.children 判断拆改使用：
+	使用 React.Children 内置方法转为数组
+	import React from 'react'
+	function Son(props) {
+    // 使用 React.Children 内置方法转为数组
+   	let children =  React.Children.toArray(props.children);
+  		return (
+    		<>
+      			{props.children}
+      			<div>
+        			{children[0]}
+        			<br/>
+        			{children[1]}
+        			<br/>
+      			</div>
+    		</>
+  		)
+	}
+	export default Son
+	
+具名插槽：
+	子组件：
+		import React from 'react'
+		function Son(props) {
+    		let children = React.Children.toArray(props.children);
+    		let header = [];
+    		let footer = [];
+    		let defaults = [];
+    		children.forEach(i=>{
+        		if(i.props.slot === 'header'){
+            		header.push(i)
+        		}else if(i.props.slot === 'footer'){
+            		footer.push(i)
+        		}else{
+            		defaults.push(i)
+        		}
+    		})
+    		return (
+        		<>
+            		<div>
+                		{header}
+                		{footer}
+                		{defaults}
+            		</div>
+        		</>
+    		)
+		}
+		export default Son
+	父组件：
+		import Son from "./Son";
+		function Father() {
+  			return (
+    			<>
+      				<Son>
+        				<div slot='footer'>页脚</div>
+        				<span>哈哈</span>
+        				<div slot='header'>页眉</div>
+      				</Son>
+    			</>
+  			)
+		}
+		export default Father
+```
+
+##### 十六，静态组件和动态组件
+
+```
+函数组件是“静态组件”：
+	第一次渲染组件，把函数执行
+	产生一个私有的上下文
+	把解析出来的props(含children)传递进来(但是被冻结了)
+	对函数返回的 JSX 元素虚拟 DOM 进行渲染
+	但我们去修改数据的时候
+	修改上级上下文的变量
+	私有变量会发生改变
+	但是视图不会更新
+	
+类组件和 HooKs 组件是“动态组件”
+```
+
+##### 十七，浅比较和深比较
+
+```
+浅比较：
+	const isObject = (obj) => {
+    	return obj !== null &&  /^(object|function)$/.test(typeof obj)
+	}
+	const shallowEqual = (A,B)=>{
+    	if(!isObject(A) && !isObject(B)) return A === B;
+    	if(A === B) return true;
+    	// 先比较成员的数量
+    	let keysA = Reflect.ownKeys(A);
+    	let keysB = Reflect.ownKeys(B);
+    	if(keysA.length !== keysB.length) return false;
+
+    	for(let i = 0; i< keysA.length; i++){
+        	let key = keysA[i];
+        	// 属性不在两个对象中 或者 属性名相同，属性值不同
+        	if(!B.hasOwnProperty(key) || A[key] !== B[key]) return false
+    	}
+    	// 都相同返回true
+    	return true
+	}
+
+深比较：
+	const deepEqual = (A, B) => {
+    	// NaN 对比情况判断为相同
+    	if (Number.isNaN(A) && Number.isNaN(B)) return true;
+    	// 是否为对象
+    	if (!isObject(A) && !isObject(B)) return A === B;
+    	if (A === B) return true;
+    	// 先比较成员的数量
+    	let keysA = Reflect.ownKeys(A);
+    	let keysB = Reflect.ownKeys(B);
+    	if (keysA.length !== keysB.length) return false;
+
+    	for (let i = 0; i < keysA.length; i++) {
+        	let key = keysA[i];
+        	// 属性不在两个对象中 或者 属性名相同，属性值不同
+        	if (!B.hasOwnProperty(key)) return false
+        	// 递归比较
+        	if (B.hasOwnProperty(key)) {
+            	const equal = deepEqual(A[key], B[key])
+            	if(!equal) return equal
+        	}
+    	}
+    	// 都相同返回true
+    	return true
+	}
 ```
 
 
@@ -225,25 +579,7 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+ 
 
 
 
