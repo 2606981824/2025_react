@@ -809,7 +809,7 @@ useState 修改状态方法在循环 for/in中使用 flushSync, 不管循环几�
     }
 ```
 
-![](.\ueState更新视图原理.png)
+<img src=".\ueState更新视图原理.png" />
 
 ##### 二十四，手写 useState hooks 函数
 
