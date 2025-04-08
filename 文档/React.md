@@ -1,65 +1,29 @@
 ### 2025 React
 
-##### 一，创建react脚手架
+##### 一，创建 react 脚手架
 
-```vue
-命令 npx create-react-app 项目名称
-package.json文件配置
-  "name": "2025_react",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "web-vitals": "^2.1.4" // 性能检测工具
-  },
-  "scripts": {
-    "start": "react-scripts start", // 开发环境
-    "build": "react-scripts build", // 生产环境
-    "test": "react-scripts test", // 单元测试
-    "eject": "react-scripts eject" // 暴露webpack配置规则
-  },
-  "eslintConfig": { // 词法检测 },
-  "browserslist": { // 基于 browserslist 规范，这只浏览器的兼容兼容情况
-    "production": [
-      ">0.2%", // 使用率超过 0.2% 的浏览器
-      "not dead", // 不考虑 IE
-      "not op_mini all" // 不考虑欧朋浏览器
-    ],
-  }
-
-命令 treer -i "node_modules" 获取项目文件树
-├─package-lock.json
-├─package.json
-├─README.md
-├─文档
-| └React.md
-├─src
-|  └index.js
-├─scripts
-|    ├─build.js  							后期执行相关打包命令的入口文件
-|    ├─start.js
-|    └test.js
-├─public
-|   ├─favicon.ico
-|   └index.html
-├─config
-|   ├─env.js
-|   ├─getHttpsConfig.js
-|   ├─modules.js
-|   ├─paths.js                              打包中需要的一些路径
-|   ├─webpack.config.js					 	webpack 配置
-|   ├─webpackDevServer.config.js 			webpack-dev-serve配置
-|   ├─webpack
-|   |    ├─persistentCache
-|   |    |        └createEnvironmentHash.js
-|   ├─jest
-|   |  ├─babelTransform.js
-|   |  ├─cssTransform.js
-|   |  └fileTransform.js
+```js
+命令 npx create-react-app 项目名称 package.json文件配置 "name": "2025_react",
+"version": "0.1.0", "private": true, "dependencies": { "web-vitals": "^2.1.4" //
+性能检测工具 }, "scripts": { "start": "react-scripts start", // 开发环境
+"build": "react-scripts build", // 生产环境 "test": "react-scripts test", //
+单元测试 "eject": "react-scripts eject" // 暴露webpack配置规则 },
+"eslintConfig": { // 词法检测 }, "browserslist": { // 基于 browserslist
+规范，这只浏览器的兼容兼容情况 "production": [ ">0.2%", // 使用率超过 0.2%
+的浏览器 "not dead", // 不考虑 IE "not op_mini all" // 不考虑欧朋浏览器 ], }
+命令 treer -i "node_modules" 获取项目文件树 ├─package-lock.json ├─package.json
+├─README.md ├─文档 | └React.md ├─src | └index.js ├─scripts | ├─build.js
+后期执行相关打包命令的入口文件 | ├─start.js | └test.js ├─public | ├─favicon.ico
+| └index.html ├─config | ├─env.js | ├─getHttpsConfig.js | ├─modules.js |
+├─paths.js 打包中需要的一些路径 | ├─webpack.config.js webpack 配置 |
+├─webpackDevServer.config.js webpack-dev-serve配置 | ├─webpack | |
+├─persistentCache | | | └createEnvironmentHash.js | ├─jest | |
+├─babelTransform.js | | ├─cssTransform.js | | └fileTransform.js
 ```
 
 ##### 二，配置 less less-loader 插件
 
-```
+```js
 npm i less less-loader@8
 在webpack.config.js配置less less-loadder插件
 找到原来 sass 处理器位置修改成 less
@@ -86,14 +50,14 @@ npm i less less-loader@8
 
 ##### 四，修改启动域名和端口号
 
-```
+```js
 在 start.js 文件中找到
 	const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 3000;
 	const HOST = process.env.HOST || '0.0.0.0';
 	替换
 	const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 8080;
 	const HOST = process.env.HOST || '127.0.0.1';
-	
+
 通过环境变量修改
 下载插件 npm i cross-env
 在package.json文件找到 scripts 启动命令处
@@ -104,7 +68,7 @@ npm i less less-loader@8
 
 ##### 五，修改浏览器兼容
 
-```
+```js
 在 index.jsx 入口文件添加
 	import 'react-app-polyfill/ie9';
 	import 'react-app-polyfill/ie11';
@@ -114,7 +78,7 @@ npm i less less-loader@8
 
 ##### 六，配置跨域代理
 
-```
+```js
 在 src 目录下创建 setUpProxy.js 文件
 下载插件 http-proxy-middleware
 
@@ -165,7 +129,7 @@ module.exports = function (app) {
 
 ##### 七，React，Vue，Anglar(NG)
 
-```
+```js
 主流思想：
 	不直接操作 DOM ，数据驱动视图更新
 	数据发生改变时，页面会刷新
@@ -176,27 +140,27 @@ module.exports = function (app) {
 React框架采用的是 MVC 体系，Vue框架采用的是 MVVM 体系
 ```
 
-##### 八，MVC 
+##### 八，MVC
 
-```
+```js
 MVC: model数据层 + view视图层 + controller控制层
 	数据层受到改变，那么试图层则会刷新页面，试图层操作数据使得数据改变，根据需要更新数据层和试图层，作为数据层和试图层之间的桥梁，数据驱动视图来渲染，单向数据驱动
 ```
 
-![](C:.\MVC.png)
+<img src=".\MVC.png" alt="MVVM" />
 
 ##### 九，MVVM
 
-```
+```js
 MVVM：model数据层 + vew视图层 + viewModel数据/视图监听层
 	不管数据层还是视图层发生改变，都会通知另一方，数据驱动视图来渲染，视图也可以驱动数据来更改，双驱动
 ```
 
-![](.\MVVM.png)
+<img src=".\MVVM.png" alt="MVC" />
 
-##### 十，JSX构建视图
+##### 十，JSX 构建视图
 
-```
+```js
 JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX 可以同时写 js 表达式和 HTML 标签
 
 {number/string} : 值是啥，渲染啥
@@ -213,9 +177,9 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
 
 ```
 
-##### 十一，JSX底层处理机制
+##### 十一，JSX 底层处理机制
 
-```
+```jsx
 1. 把我们编写的 JSX 语法，编译成为虚拟 DOM 对象(virtualDOM: 框架内部构建的一套对象体系，对象属性描述出视图中 DOM 节点的相关特征)
 	@1 基于 bael-peset-react-app 把 JSX 语法编译成React.createElement(...)格式
 	@2 再把 createElement 方法执行，创建虚拟 DOM
@@ -230,7 +194,7 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
          		id: 'app',
       		},
       		 "Hello,",
-         	React.createElement("span",null，world!)      
+         	React.createElement("span",null，world!)
 		)
 		React.createElement函数：
 			参数1 ele：元素标签(组件)名称
@@ -239,9 +203,9 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
 		React.createElement返回值：虚拟 DOM 对象(4个属性)
 			key: 循环渲染所需要的key
 			props: 存放本身的属性和以及所有子节点cjildren
-			ref: 节点或组件实例	
+			ref: 节点或组件实例
 			type: 标签名称
-			
+
 		// 手写 createElement方法 创建虚拟 DOM 对象
  		export function createElement(ele,props,...children){
     		let virtualDom = {
@@ -274,9 +238,9 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
 		root.render(
 			<>...</>
 		)
-	
+
 	// 手写 render 方法 把虚拟 DOM 转换成真实 DOM 16版本
-	export function render(virtualDom,container){   
+	export function render(virtualDom,container){
     	let { type ,props } = virtualDom;
     	if(typeof type === 'string'){
         	// 动态创建对应标签
@@ -286,7 +250,7 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
             	// clssName的处理
             	if(key === 'className'){
                 	ele.className = value;
-                	return; 
+                	return;
             	}
             	// 样式的处理
             	if(key === 'style'){
@@ -315,17 +279,15 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
         	container.appendChild(ele)
     	}
 	}
-	
+
 补充说明: 第一次渲染页面是这直接从虚拟DOM转为真实DOM，但后期更新时，需要使用diff算法对比新旧DOM的差异部分，然后重新渲染差异部分
 ```
 
-![](.\JSX渲染.png)
-
-
+<img src=".\JSX渲染.png" alt="MVVM" />
 
 ##### 十二，封装简单对象迭代方法
 
-```
+```js
 	// 对象迭代方法 获取对象所有的 私有的，不论是否可枚举，不论类型
 	// Object.getOwnPropertyNames() 获取对象非 Symbol 类型的私有属性(无关可枚举型)
 	// Object.getOwnPropertySymbol() 获取 Symbol 类型的私有属性
@@ -346,7 +308,7 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
 
 ##### 十三，函数组件底层渲染机制
 
-```
+```jsx
 1. 基于 bael-peset-react-app 把调用的组件转换成 createElement 格式
 2. 再把 createElement 方法执行，创建虚拟 DOM
 	React.createElement(DemoOne,{
@@ -378,21 +340,21 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
 
 ##### 十四，函数组件 props 属性相关细节处理
 
-```
+```js
 只读，不可修改
 	对象本身可设置规则：冻结，密封，不可扩展
 	冻结：
 		Object.freeze(obj): 无法修改，无法新增，无法删除以及无法做劫持，冻结只是浅冻结，无法做到深度冻结，需要递归
 		Object.isFrozen(obj): 检查是否被冻结
-		
+
 	密封：
 		Obect.seal(obj): 可法新增，无法删除以及无法做劫持，密封只是浅密封，无法做到深度密封，需要递归
 		Obect.isSealed(obj): 检查是否被密封
-		
+
 	不可拓展：
 		Object.preventExtensions(obj): 可修改，可删除，可劫持，无法新增，也是浅不可拓展
 		Object.isExtensible(obj): 检查是否不可拓展
-		
+
 
 设置 props 属性规则：
 	下载插件 prop-types
@@ -408,7 +370,7 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
 
 ##### 十五，函数组件的插槽机制
 
-```
+```jsx
 使用 props.children
 
 默认插槽
@@ -457,7 +419,7 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
   		)
 	}
 	export default Son
-	
+
 具名插槽：
 	子组件：
 		import React from 'react'
@@ -504,7 +466,7 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
 
 ##### 十六，静态组件和动态组件
 
-```
+```js
 函数组件是“静态组件”：
 	第一次渲染组件，把函数执行
 	产生一个私有的上下文
@@ -514,14 +476,14 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
 	修改上级上下文的变量
 	私有变量会发生改变
 	但是视图不会更新
-	
+
 类组件和 HooKs 组件是“动态组件”
 	render 函数在渲染的时候，如果 type 是 new 开头的，则会用 new 创建一个类的实例执行，也会把 props 传递进去
 ```
 
 ##### 十七，浅比较和深比较
 
-```
+```js
 浅比较：
 	const isObject = (obj) => {
     	return obj !== null &&  /^(object|function)$/.test(typeof obj)
@@ -572,40 +534,40 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
 
 ##### 十八，React 合成事件
 
-```
+```js
 React 内部基于浏览器合成的事件，在合成事件中 React 提供统一的事件对象，兼容了浏览器的差异，通过根 root 根元素顶层监听的形式，通过事件委托的方式来统一管理所有的事件，可以在事件上区分事件的优先级，优化用户体验
 
 事件具备传播机制：
 	1. 从最外层向最里层逐一查找（捕获阶段：分析路径）
 	2. 把事件源（出发事件的元素）的行为触发（目标阶段）
 	3. 按照捕获阶段分析出来的路径，从里到外，把每一个元素相同的事件行为触发（冒泡阶段）
-	
+
 	阻止事件传播的两个方法
 	ev.stopPropagation():阻止事件的从传播（包括捕获和冒泡）
 	ev.stopImmediateProgation():也可以阻止事件传播，只不过它可以把当前元素绑定其他方法（同级的），如果还未执行，也不会再执行了
-	
-	
+
+
 事件委托：
 	利用事件的传播机制，实现一套事件绑定处理方案
-	
+
 	优势：
 	提高 JS 代码的运行性能，实现一套事件绑定处理方案
 	在一定的需求上需要基于事件委托
 	给动态绑定的元素做事件绑定
-	
-	
+
+
 React 两种绑定事件的方式以及区别：
 	1. onXxx : 绑定在冒泡阶段
 	2. onXxxCapture : 绑定在捕获阶段
 	一个元素同时用这个两个绑定一个事件时，优先执行第二种
-	
+
 合成事件：
 	绝对不是给当前元素基于 addEventKisener 单独做的事件绑定
 	React 合成事件都是基于事件委托处理的
 	在17版本及以后都是委托到 root 根容器（捕获和冒泡）
 	在17版本以前都是委托 document 容器（只做了冒泡阶段的委托）
 	只对有事件传播机制的事件做了委托
-	
+
 在组件渲染的时候，如果发现 JSX 元素中有 onXxx/onXxxCapture 这样的属性，不会给当前元素直接做事件绑定，只是把绑定的方法赋值给元素的相关属性
 
 例如：
@@ -614,12 +576,12 @@ React 两种绑定事件的方式以及区别：
 	在元素上添加了属性为 xxx.onClick,属性值是一个事件
 	然后对 #root 这个容器做事件绑定（捕获和冒泡都做了）
 	原因：是因为组件中所有渲染的内容，最后都会插入到 #root 容器中，这样点击页面任何一个元素，最后都会 #root 的事件中触发
-	
+
 ```
 
 ##### 十九，合成事件执行原理
 
-```
+```js
 结构：
 		const root = document.getElementById('root');
         const secondFloor = document.getElementById('secondFloor');
@@ -657,7 +619,7 @@ React 两种绑定事件的方式以及区别：
                 }
             })
         }, false)
-        
+
 当 render 方法将虚拟 DOM 转换成真实 DOM 时，会将所有属性添加在标签上，
 那么当标签触发事件时就会通过事件流触发事件的捕获和冒泡阶段，
 当捕获和冒泡到根节点时，根节点会通过事件对象中的 composedPath 方法获取到路径
@@ -665,17 +627,17 @@ ev.composedPath()得到一个数组，
 当捕获时会将数组反转，然后遍历判断是否存在 onXxx/onXxxcapture 这两个属性值，存在则执行，冒泡同理但不需要反转数组
 ```
 
-![](.\合成事件.png)
+<img src=".\合成事件.png" />
 
-##### 二十，Hook组件
-
-```
-Hooks组件是React16.8后开始提供的
-```
-
-#####  二十一，安装 antd，配置中文包
+##### 二十，Hook 组件
 
 ```
+Hooks组件是 React16.8 后开始提供的
+```
+
+##### 二十一，安装 antd，配置中文包
+
+```jsx
 安装命令 npm i antd
 
 配置中文以及配置日历中文，需要安装 dayjs
@@ -702,11 +664,11 @@ Hooks组件是React16.8后开始提供的
 
 ##### 二十二，useState
 
-```
+```js
 Hooks 组件每次更新视图：
 	都是把函数重新执行一次，会产生全新私有上下文
 	内部的代码都需要重新执行一次
-	
+
 useState 更新过程：
 	首先 Hooks 组件会创建两个去全局变量，一个空数组，一个索引初始值为0
 	当我们每次调用 useState 的时候，
@@ -720,7 +682,7 @@ useState 更新过程：
 	把函数的返回值重新赋值给形参，再根据保存下来的索引值，
 	然后通过 Object.is 方法判断新的状态值和旧的状态值是否相同
 	不同则更新数组对应的状态，然后再一部通知渲染视图
-	
+
 当调用 useState 返回的修改状态方法后，后面接着输出的状态值还是旧的值，因为找到的变量是它的上级上下文
 
 useState 返回的修改状态的方法：
@@ -730,7 +692,7 @@ useState 返回的修改状态的方法：
     	setXXX(XXX)
         setXXX(XXX)
     }
-    
+
     在 React-dom 中有一个 flushSync 方法可以改变成同步的
     // 执行两次
     const handle = ()=>{
@@ -738,36 +700,36 @@ useState 返回的修改状态的方法：
         	setXXX(XXX)
         })
         setXXX(XXX)
-   	}   
-   	
+   	}
+
    	在 React16 中可以放在定时器里面执行变成同步的
    	// 执行两次
    	setTimeout(()=>{
     	setXXX(XXX)
         setXXX(XXX)
     },1000)
-    
+
 useState 修改状态值后拿到最新的值 2 种常见方法
 	1. 用 useEffect
 	2. 调用状态修改方法传回调函数
 		setXxx((v)=>{
 			let newVal = v+1
-			return newVal 
+			return newVal
 		})
 ```
 
-![](C:.\useState更新过程.png)
+<img src=".\useState更新过程.png" />
 
-##### 二十三，useState优化机制
+##### 二十三，useState 优化机制
 
-```
+```js
 useState 修改状态方法在循环 for/in中使用 flushSync, 不管循环几次，hooks 组件都会执行两次
 	如果不使用 flushSync 则只会执行一次
 	原因：
 		因为每次 useState 每次修改状态值的时候都会把修改的值与原来的值做比较（基于Object.is方法），当他发现修改的值与原来的值相同则不会重新执行 hooks 组件
-	
+
 	但是 setXxx 参数接收的是一个函数，那么使用 flushSync, hooks 组件则会执行循环的次数，如果不使用 flushSync 也只是执行一次，但是最后得到的状态值不相同
-	
+
 都不使用 flushSync 情况下
 	// hooks 组件执行一次, x 输出为 2
 	let [x, setX] = useState(1);
@@ -776,7 +738,7 @@ useState 修改状态方法在循环 for/in中使用 flushSync, 不管循环几�
         	 setX(x + 1);
         }
     }
-    
+
     // hooks 组件执行一次, x 输出为 11
 	let [x, setX] = useState(1);
     const handle = () => {
@@ -786,7 +748,7 @@ useState 修改状态方法在循环 for/in中使用 flushSync, 不管循环几�
         	 });
         }
     }
-   
+
 都使用 flushSync 情况下、
 	//  hooks 组件执行两次, x 输出为 2
 	let [x, setX] = useState(1);
@@ -797,7 +759,7 @@ useState 修改状态方法在循环 for/in中使用 flushSync, 不管循环几�
             });
         }
     }
-    
+
     // hooks 组件执行十次, x 输出为 11
     let [x, setX] = useState(1);
     const handle = () => {
@@ -811,9 +773,11 @@ useState 修改状态方法在循环 for/in中使用 flushSync, 不管循环几�
     }
 ```
 
+![ueState更新视图原理](.\ueState更新视图原理.png)
+
 ##### 二十四，手写 useState hooks 函数
 
-```
+```js
 // 模拟一个简单useState
 
 /**
@@ -859,7 +823,39 @@ export function UseState(initialState) {
 
 ##### 二十五，useEffect
 
-```
+```js
+useEffect 函数可以接收 2 参数
+	参数 1 ： 回调函数
+	参数 2 ： 数组（可以不传），数组里面是依赖的状态
 
-```
+useEffect(()=>{
+	会在 hooks 组件任何时候执行
+})
 
+useEffect(()=>{
+	会在 hooks 组件第一次加载时执行
+}，[])
+
+useEffect(()=>{
+	会在 hooks 组件第一次加载时执行，同时依赖的状态发生变化时执行
+}，[状态])
+
+useEffect(()=>{
+	return ()=>{
+		可以获取上一次的状态值
+		返回的函数会在组件释放的时候执行
+	}
+})
+
+useEffect(()=>{
+	return ()=>{
+		返回的函数在组件卸载时执行
+	}
+}，[])
+
+useEffect(()=>{
+	return ()=>{
+		返回的函数在依赖的状态发生变化以及组件卸载时执行
+	}
+}，[状态])
+```
