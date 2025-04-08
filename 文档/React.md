@@ -183,7 +183,7 @@ MVC: model数据层 + view视图层 + controller控制层
 	数据层受到改变，那么试图层则会刷新页面，试图层操作数据使得数据改变，根据需要更新数据层和试图层，作为数据层和试图层之间的桥梁，数据驱动视图来渲染，单向数据驱动
 ```
 
-![](C:\Users\Admin\Desktop\2025_react\文档\MVC.png)
+![](C:.\MVC.png)
 
 ##### 九，MVVM
 
@@ -192,7 +192,7 @@ MVVM：model数据层 + vew视图层 + viewModel数据/视图监听层
 	不管数据层还是视图层发生改变，都会通知另一方，数据驱动视图来渲染，视图也可以驱动数据来更改，双驱动
 ```
 
-![](C:\Users\Admin\Desktop\2025_react\文档\MVVM.png)
+![](.\MVVM.png)
 
 ##### 十，JSX构建视图
 
@@ -319,7 +319,7 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
 补充说明: 第一次渲染页面是这直接从虚拟DOM转为真实DOM，但后期更新时，需要使用diff算法对比新旧DOM的差异部分，然后重新渲染差异部分
 ```
 
-![](C:\Users\Admin\Desktop\2025_react\文档\JSX渲染.png)
+![](.\JSX渲染.png)
 
 
 
@@ -516,6 +516,7 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
 	但是视图不会更新
 	
 类组件和 HooKs 组件是“动态组件”
+	render 函数在渲染的时候，如果 type 是 new 开头的，则会用 new 创建一个类的实例执行，也会把 props 传递进去
 ```
 
 ##### 十七，浅比较和深比较
@@ -569,21 +570,152 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
 	}
 ```
 
+##### 十八，React 合成事件
 
+```
+React 内部基于浏览器合成的事件，在合成事件中 React 提供统一的事件对象，兼容了浏览器的差异，通过根 root 根元素顶层监听的形式，通过事件委托的方式来统一管理所有的事件，可以在事件上区分事件的优先级，优化用户体验
 
+事件具备传播机制：
+	1. 从最外层向最里层逐一查找（捕获阶段：分析路径）
+	2. 把事件源（出发事件的元素）的行为触发（目标阶段）
+	3. 按照捕获阶段分析出来的路径，从里到外，把每一个元素相同的事件行为触发（冒泡阶段）
+	
+	阻止事件传播的两个方法
+	ev.stopPropagation():阻止事件的从传播（包括捕获和冒泡）
+	ev.stopImmediateProgation():也可以阻止事件传播，只不过它可以把当前元素绑定其他方法（同级的），如果还未执行，也不会再执行了
+	
+	
+事件委托：
+	利用事件的传播机制，实现一套事件绑定处理方案
+	
+	优势：
+	提高 JS 代码的运行性能，实现一套事件绑定处理方案
+	在一定的需求上需要基于事件委托
+	给动态绑定的元素做事件绑定
+	
+	
+React 两种绑定事件的方式以及区别：
+	1. onXxx : 绑定在冒泡阶段
+	2. onXxxCapture : 绑定在捕获阶段
+	一个元素同时用这个两个绑定一个事件时，优先执行第二种
+	
+合成事件：
+	绝对不是给当前元素基于 addEventKisener 单独做的事件绑定
+	React 合成事件都是基于事件委托处理的
+	在17版本及以后都是委托到 root 根容器（捕获和冒泡）
+	在17版本以前都是委托 document 容器（只做了冒泡阶段的委托）
+	只对有事件传播机制的事件做了委托
+	
+在组件渲染的时候，如果发现 JSX 元素中有 onXxx/onXxxCapture 这样的属性，不会给当前元素直接做事件绑定，只是把绑定的方法赋值给元素的相关属性
 
+例如：
+		xxx.onClick=()=>{}
+		xxx.onClickCapture=()=>{}
+	在元素上添加了属性为 xxx.onClick,属性值是一个事件
+	然后对 #root 这个容器做事件绑定（捕获和冒泡都做了）
+	原因：是因为组件中所有渲染的内容，最后都会插入到 #root 容器中，这样点击页面任何一个元素，最后都会 #root 的事件中触发
+	
+```
 
+##### 十九，合成事件执行原理
 
+```
+结构：
+		const root = document.getElementById('root');
+        const secondFloor = document.getElementById('secondFloor');
+        const thirdFloor = document.getElementById('thirdFloor');
 
+运行逻辑：
+        secondFloor.onClick = () => {
+            console.log('secondFloor冒泡');
+        }
+        secondFloor.onClickCapture = () => {
+            console.log('secondFloor捕获');
+        }
 
+        thirdFloor.onClick = () => {
+            console.log('thirdFloor冒泡');
+        }
+        thirdFloor.onClickCapture = () => {
+            console.log('thirdFloor捕获');
+        }
+        // 捕获
+        root.addEventListener('click', (ev) => {
+            let path = ev.composedPath();
+            [...path].reverse().forEach(el => {
+                if (el.onClickCapture) {
+                    el.onClickCapture();
+                }
+            })
+        }, true)
+        // 冒泡
+        root.addEventListener('click', (ev) => {
+            let path = ev.composedPath();
+            [...path].forEach(el => {
+                if (el.onClick) {
+                    el.onClick();
+                }
+            })
+        }, false)
+        
+当 render 方法将虚拟 DOM 转换成真实 DOM 时，会将所有属性添加在标签上，
+那么当标签触发事件时就会通过事件流触发事件的捕获和冒泡阶段，
+当捕获和冒泡到根节点时，根节点会通过事件对象中的 composedPath 方法获取到路径
+ev.composedPath()得到一个数组，
+当捕获时会将数组反转，然后遍历判断是否存在 onXxx/onXxxcapture 这两个属性值，存在则执行，冒泡同理但不需要反转数组
+```
 
+![](.\合成事件.png)
 
+##### 二十，Hook组件
 
- 
+```
+Hooks组件是React16.8后开始提供的
+```
 
+#####  二十一，安装 antd，配置中文包
 
+```
+安装命令 npm i antd
 
+配置中文以及配置日历中文，需要安装 dayjs
+安装命令 npm i dayjs
 
+在入口文件配置
+	import React from 'react';
+	import ReactDOM from 'react-dom/client';
+	import '@/index.css';
+	import App from '@/App';
+	import { ConfigProvider } from 'antd';
+	import zhCN from 'antd/locale/zh_CN';
+	import "dayjs/locale/zh-cn";
+
+	const root = ReactDOM.createRoot(document.getElementById('root'));
+
+	root.render(
+  		<ConfigProvider locale={zhCN} >
+    		<App />
+  		</ConfigProvider>,
+	);
+
+```
+
+##### 二十二，useState
+
+```
+Hooks 组件每次更新视图：
+	都是把函数重新执行一次，会产生全新私有上下文
+	内部的代码都需要重新执行一次
+	
+useState 更新过程：
+	首先 Hooks 组件会创建两个去全局变量，一个空数组，一个索引初始值为0
+	当我们每次调用 useState 的时候，
+	执行过程中 useState 会把索引值存储下来，
+	在把 useState 接收的值按照索引值放进去，
+	如果接收的值是执行函数就会执行函数，把函数返回值重新赋值给接收的形参
+	再对全局索引加 1，最后返回状态值以及修改状态方法
+	调用修改状态方法，可以传值也可以传回调函数
+```
 
 
 

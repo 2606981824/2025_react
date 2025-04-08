@@ -1,20 +1,37 @@
-/* 对ES6内置API做兼容处理 */
-import 'react-app-polyfill/ie9';
-import 'react-app-polyfill/ie11';
-import 'react-app-polyfill/stable';
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import '@/index.less';
+import '@/index.css';
+import App from '@/App';
+import { ConfigProvider } from 'antd';
+import zhCN from 'antd/locale/zh_CN';
+import "dayjs/locale/zh-cn";
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+
+root.render(
+  <ConfigProvider locale={zhCN} >
+    <App />
+  </ConfigProvider>,
+);
+
+/* 对ES6内置API做兼容处理 */
+// import 'react-app-polyfill/ie9';
+// import 'react-app-polyfill/ie11';
+// import 'react-app-polyfill/stable';
+
+// import React from 'react';
+// import ReactDOM from 'react-dom/client';
+// import '@/index.less';
 // import { createElement,render } from './jsxHandle';
-import DemoOne from "@/views/DemoOne";
+// import DemoOne from "@/views/DemoOne";
 // import Father from './views/Father';
 // import Dialog from './views/Dialog';
 // import Vote from './views/Vote';
-import Class from './views/Class';
+// import Class from './views/Class';
+// import Event from './views/Event'
 
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+// const root = ReactDOM.createRoot(document.getElementById('root'));
 
 // 密集数组
 // const data = [
@@ -57,24 +74,24 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 //   createElement("span",null,'world!'),
 // )
 
-React.createElement(DemoOne,{
-  title:"demo",
-  x:10,
-  className:"demo",
-  style:{
-    fontSize:'20px'
-  }
-})
+// React.createElement(DemoOne,{
+//   title:"demo",
+//   x:10,
+//   className:"demo",
+//   style:{
+//     fontSize:'20px'
+//   }
+// })
 
 // let obj = {
 //   a:1,
 //   b:2,
 // }
 
-root.render(
+// root.render(
   // React.StrictMode react 语法严格模式
-  <React.StrictMode>
-    <div>
+  // <React.StrictMode>
+    // <div>
       {/* <h2>React</h2>
       <ul>
         {
@@ -129,15 +146,13 @@ root.render(
         </Dialog> */}
 
         {/* <Vote></Vote> */}
-        <Class></Class>
-    </div>
-  </React.StrictMode>
-);
+        {/* <Class></Class> */}
+        {/* <Event></Event> */}
+    // </div>
+  // </React.StrictMode>
+// );
 
 // render(jsxObj,document.getElementById('root'))
-
-
-
 
 // fetch('/jian/subscription/recommended_collections')
 //   .then(response => {
