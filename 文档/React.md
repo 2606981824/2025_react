@@ -710,12 +710,156 @@ Hooks 组件每次更新视图：
 useState 更新过程：
 	首先 Hooks 组件会创建两个去全局变量，一个空数组，一个索引初始值为0
 	当我们每次调用 useState 的时候，
-	执行过程中 useState 会把索引值存储下来，
-	在把 useState 接收的值按照索引值放进去，
-	如果接收的值是执行函数就会执行函数，把函数返回值重新赋值给接收的形参
-	再对全局索引加 1，最后返回状态值以及修改状态方法
+	执行过程中 useState 会把当前索引值存储下来，
+	再储存当前索引值下，传递进来的状态，
+	如果接收的值是执行函数就会执行函数，把函数返回值重新赋值给接收的形参，
+	然后创建修改状态的方法，
+	再对全局索引加 1，最后返回当前索引下的状态以及更新状态方法
 	调用修改状态方法，可以传值也可以传回调函数
+	执行的时候首先会判断形参是否是一个函数，是函数就执行，
+	把函数的返回值重新赋值给形参，再根据保存下来的索引值，
+	然后通过 Object.is 方法判断新的状态值和旧的状态值是否相同
+	不同则更新数组对应的状态，然后再一部通知渲染视图
+	
+当调用 useState 返回的修改状态方法后，后面接着输出的状态值还是旧的值，因为找到的变量是它的上级上下文
+
+useState 返回的修改状态的方法：
+	在 React18 中异步的，会有一个更新队列，实现状态的批量处理，队列所有的状态行函数执完成后刷新视图
+	//执行一次
+    const handle = ()=>{
+    	setXXX(XXX)
+        setXXX(XXX)
+    }
+    
+    在 React-dom 中有一个 flushSync 方法可以改变成同步的
+    // 执行两次
+    const handle = ()=>{
+    	flushSync(()=>{
+        	setXXX(XXX)
+        })
+        setXXX(XXX)
+   	}   
+   	
+   	在 React16 中可以放在定时器里面执行变成同步的
+   	// 执行两次
+   	setTimeout(()=>{
+    	setXXX(XXX)
+        setXXX(XXX)
+    },1000)
+    
+useState 修改状态值后拿到最新的值 2 种常见方法
+	1. 用 useEffect
+	2. 调用状态修改方法传回调函数
+		setXxx((v)=>{
+			let newVal = v+1
+			return newVal 
+		})
 ```
 
+![](C:.\useState更新过程.png)
 
+##### 二十三，useState优化机制
+
+```
+useState 修改状态方法在循环 for/in中使用 flushSync, 不管循环几次，hooks 组件都会执行两次
+	如果不使用 flushSync 则只会执行一次
+	原因：
+		因为每次 useState 每次修改状态值的时候都会把修改的值与原来的值做比较（基于Object.is方法），当他发现修改的值与原来的值相同则不会重新执行 hooks 组件
+	
+	但是 setXxx 参数接收的是一个函数，那么使用 flushSync, hooks 组件则会执行循环的次数，如果不使用 flushSync 也只是执行一次，但是最后得到的状态值不相同
+	
+都不使用 flushSync 情况下
+	// hooks 组件执行一次, x 输出为 2
+	let [x, setX] = useState(1);
+    const handle = () => {
+        for (let i = 1; i < 10; i++) {
+        	 setX(x + 1);
+        }
+    }
+    
+    // hooks 组件执行一次, x 输出为 11
+	let [x, setX] = useState(1);
+    const handle = () => {
+        for (let i = 1; i < 10; i++) {
+        	 setX((v)=>{
+        	 	return v + 1
+        	 });
+        }
+    }
+   
+都使用 flushSync 情况下、
+	//  hooks 组件执行两次, x 输出为 2
+	let [x, setX] = useState(1);
+    const handle = () => {
+        for (let i = 1; i < 10; i++) {
+            flushSync(() => {
+                setX(x + 1);
+            });
+        }
+    }
+    
+    // hooks 组件执行十次, x 输出为 11
+    let [x, setX] = useState(1);
+    const handle = () => {
+        for (let i = 0; i < 10; i++) {
+            flushSync(() => {
+                setX((v) => {
+                    return v + 1;
+                });
+            });
+        }
+    }
+```
+
+##### 二十四，手写 useState hooks 函数
+
+```
+// 模拟一个简单useState
+
+/**
+ * _state:储存状态
+ * _index:状态索引值
+ */
+
+let _state = [],
+    _index = 0;
+
+//  通知视图更新
+let defer = (cb) => Promise.resolve().then(cb);
+
+export function UseState(initialState) {
+    // 储存对应的索引值
+    let currentIndex = _index;
+    // 如果为函数，则执行函数，返回值赋值给形参
+    if (typeof initialState === 'function') {
+        initialState = initialState();
+    }
+    // 储存当前索引下的状态
+    _state[currentIndex] = initialState;
+    let setState = (newState) => {
+        // 如果是函数，将当前索引下的状态作为实参传入并执行函数，将返回值赋值给形参
+        if (typeof newState === 'function') {
+            newState = newState(_state[currentIndex]);
+        }
+        // 通过Object.is方法判断前后状态是否相等，不相等则更新状态并通知视图更新
+        if (!Object.is(_state[currentIndex], newState)) {
+            _state[currentIndex] = newState;
+            defer(() => {
+                // 通知视图更新
+                console.log('视图更新');
+            })
+        }
+    }
+    // 索引值 + 1
+    _index += 1;
+    // 返回一个数组，第一个元素为当前索引下的状态，第二个元素为更新状态的方法
+    return [_state[currentIndex], setState];
+}
+```
+
+##### 二十五，useEffect
+
+```
+
+```
 

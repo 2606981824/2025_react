@@ -5,6 +5,7 @@ import App from '@/App';
 import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import "dayjs/locale/zh-cn";
+import '@ant-design/v5-patch-for-react-19';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
