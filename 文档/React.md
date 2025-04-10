@@ -663,7 +663,7 @@ ev.composedPath()得到一个数组，
 当捕获时会将数组反转，然后遍历判断是否存在 onXxx/onXxxcapture 这两个属性值，存在则执行，冒泡同理但不需要反转数组
 ```
 
-<img src=".\合成事件.png" />
+<img src=".\合成事件.png" alt="合成事件原理"/>
 
 ##### 二十，Hook 组件
 
@@ -754,7 +754,7 @@ useState 修改状态值后拿到最新的值 2 种常见方法
 		})
 ```
 
-<img src=".\useState更新过程.png" />
+<img src=".\useState更新过程.png" alt="useState更新过程" />
 
 ##### 二十三，useState 优化机制
 
@@ -809,7 +809,7 @@ useState 修改状态方法在循环 for/in中使用 flushSync, 不管循环几�
     }
 ```
 
-<img src=".\ueState更新视图原理.png" />
+<img src=".\ueState更新视图原理.png" alt="useState更新过程" />
 
 ##### 二十四，手写 useState hooks 函数
 
@@ -895,3 +895,229 @@ useEffect(()=>{
 	}
 }，[状态])
 ```
+
+##### 二十六，useEffect 执行原理以及细节
+
+```js
+执行原理：
+	在 hooks 函数第一次执行时，
+    hooks 函数所有的 useEffect 都会被 React 内部的一个 MountEffect 方法把所有的 useEffect 的回调函数以及依赖放进一个 effect 链表中，
+    当视图渲染完毕后，又会通过 React 内部的一个 UpdateEffect 方法通知链表中所有的回调函数按要依赖求执行，
+    如果 useEffect 的回调函数返回的是一个函数，那么这个被返回的函数会在 hooks 组件释放前执行
+    
+细节：
+	useEffect 函数只能在 hooks 函数下调用
+    useEffect 的返回值必须是一个函数，所有回调函数不能是 async 函数
+    useEffect 必须在函数的最外层的上下文中调用，不能把其嵌入到条件判断，循环等操作语句当中
+```
+
+<img src=".\useEffect执行原理.png" alt="useEffect执行原理" >
+
+##### 二十七，useLayoutEffect
+
+```js
+与 useEffect 运行原理基本一致
+	useLayoutEffect 会比 useEffect 更早
+   	会阻止浏览器渲染真实 DOM，优先执行 effect 链表中的回调函数
+    useEffect 不会阻止浏览器渲染真实 DOM
+    在两者的回调函数中，都可以获取真实 DOM
+```
+
+<img src=".\useLayoutEffect执行原理.png" alt="useLayoutEffect执行原理" >
+
+##### 二十八，useRef 与 React.forwardRef 以及 useImperativeHandle
+
+```js
+useRef 和 React.createRef 区别
+	1. useRef 在 hooks 组件二次更新的时候获取的是之前的 DOM ，不会重复获取
+	2. React.createRef 在 hooks 组件二次更新的时候会重新获取 DOM
+   
+useRef 配合 React.forwardRef 获取子组件元素，直接使用 useRef 在子组件上会报错
+	子组件：
+    	const Son = React.forwardRef(function Son(props, ref) {
+    		return (
+       			<>
+            		<span ref={ref}>子组件</span>
+        		</>
+    		)
+		})
+    父组件：
+    	function Father() {
+  			let n = useRef()
+  			return (
+    			<>
+      				<Son ref={n}></Son>
+    			</>
+  			)
+		}
+
+useRef 配合 React.forwardRef 以及 useImperativeHandle 完成子父组件传参
+	子组件：
+    	const Son = React.forwardRef(function Son(props, ref) {
+    		let [text, setText] = useState('');
+    		useImperativeHandle(ref, () => {
+        		return {
+            		// 返回的内容，可以被父组件的 ref 对象获取
+            		text,
+            		setText
+        		}
+    		})
+    		return (
+        		<>
+            		<span ref={ref}>子组件</span>
+        		</>
+    		)
+		})
+    父组件：
+    	function Father() {
+  			let n = useRef()
+  			return (
+    			<>
+      				<Son ref={n}></Son>
+    			</>
+  			)
+		}
+        
+React.forwardRef用法：
+	参数1：一个 Hooks 组件，Hooks 组件可以多接收到一个 Ref
+    const Son = React.forwadrRef((props,ref)=>{
+ 		return <></>
+ 	})
+    
+useImperativeHandle用法：
+	参数1：接收到的Ref，参数2：回调函数，返回值为想要暴露给父组件的属性和方法
+    const Son = React.forwardRef(function Son(props, ref) {
+    	useImperativeHandle(ref, () => {
+        	return {
+            	属性和方法
+        	}
+    	})
+    	return <></>
+	})
+```
+
+##### 二十九，useMemo
+
+```js
+useMemo 使用：
+	参数1：回调函数，参数2：依赖项（数组）
+    
+    组件第一次渲染时 useMome 的回调函数会自动执行一次，
+    后期只有依赖项发生变化时，useMemo 回调函数才会自动执行，
+    如果依赖项意外的状态数据发生变化，
+    导致视图更新组件重新调用，useMemo 回调函数不会执行，
+    useMemo 回调返回一个通过计算的值
+    
+    let [x, setX] = useState(10),
+        [y, setY] = useState(10)
+
+    let num = useMemo(() => {
+        return x + y
+    }, [x, y])
+```
+
+##### 三十，useCallback 和 memo
+
+```js
+useCallback 使用：
+	参数1：回调函数，参数2：依赖项（数组）
+	组件第一次渲染时 useCallback 的回调函数会自动执行一次，
+    后期只有依赖项发生变化时，useCallback 回调函数才会自动执行，
+    如果依赖项意外的状态数据发生变化，
+    导致视图更新组件重新调用，useCallback 回调函数不会执行，
+    useCallback 回调函数返回一个未执行的函数，
+    不是所有的函数都需要 useCallback 处理，
+    一般都是传给子组件的方法做处理，
+    这样做就不会导致子组件也被重新渲染
+    
+    子组件只有 x 的状态值发生变化时，子组件才会刷新：
+    子组件：
+    	const Son = memo(
+    		function Son(props) {
+        		console.log('子组件')
+        		return (
+            		<>
+                		<span>子组件</span>
+            		</>
+        		)
+    		}
+		)
+    	
+    父组件：
+    	function Father() {
+  			let [x, setX] = useState(10),
+    			[y, setY] = useState(10)
+
+  			const handleClick = useCallback(() => {
+  			}, [x])
+  			return (
+    			<>
+      				<Button onClick={() => setX(x + 1)} >点击x</Button>
+      				<Button onClick={() => setY(y + 1)} >点击y</Button>
+      				<Son handleClick={handleClick} ></Son>
+    			</>
+  			)
+		}
+```
+
+##### 三十一，memo 和 forwaordRef
+
+```js
+memo 和 forwardRef 一起使用：
+	const Son= forwordRef((props,ref)=>{
+        return <>我是子组件</>
+    })
+    export default memo(Son)
+```
+
+##### 三十二，自定义封装 Hooks
+
+```js
+封装 Hooks 函数 
+
+基于 useState 二次封装：
+// 可以单独更新对象或者数组内某一元素 或者 整个更新
+export const UseAllState = (val) => {
+    let [state, setState] = useState(() => {
+        return val === "function" ? val() : val
+    })
+    
+    const setObjState = (attr, newVal) => {
+        if (typeof attr === "function") {
+            return attr = attr()
+        }
+        if (newVal && typeof newVal === "function") {
+            return newVal = newVal()
+        }
+
+        setState((pre) => {
+            if (typeof attr === "number" && newVal && Object.prototype.toString.call(state).includes("Array")) {
+                if (state.hasOwnProperty(attr)) {
+                    state[attr] = newVal
+                    return [...pre, ...state]
+                }
+            }
+            else if (typeof attr === "string" && newVal && Object.prototype.toString.call(state).includes("Object")) {
+                if (state.hasOwnProperty(attr)) {
+                    return { ...pre, [attr]: newVal }
+                }
+            } else if (Object.prototype.toString.call(attr).includes("Object")) {
+                return { ...pre, ...attr }
+            } else if (Object.prototype.toString.call(attr).includes("Array")) {
+                return attr
+            } else {
+                return attr
+            }
+        })
+    }
+    return [state, setObjState]
+}
+
+组件第一次渲染，统一操作
+
+
+
+自定义 Hooks 作用：
+	主要提取一些公共的逻辑，加以复用，省去冗余代码
+```
+
