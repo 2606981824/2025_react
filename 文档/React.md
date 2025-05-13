@@ -1030,6 +1030,11 @@ useCallback 使用：
     一般都是传给子组件的方法做处理，
     这样做就不会导致子组件也被重新渲染
     
+注意：
+	useCallback 没有设置任何依赖，
+    则函数永远在第一次组件渲染，产生的闭包中创建，
+    函数中用到的信息也是第一次闭包中的信息
+    
     子组件只有 x 的状态值发生变化时，子组件才会刷新：
     子组件：
     	const Son = memo(
@@ -1114,10 +1119,197 @@ export const UseAllState = (val) => {
 }
 
 组件第一次渲染，统一操作
-
+export const UseDidMount = (val) => {
+    useEffect(() => {
+        console.log('组件第一次渲染')
+    }, [])
+}
 
 
 自定义 Hooks 作用：
 	主要提取一些公共的逻辑，加以复用，省去冗余代码
+```
+
+##### 三十三，useContext
+
+```js
+useContext 用法：
+	1. 创建一个 js 文件
+	import React from 'react';
+	const ContextObject = React.createContext();
+
+	export default ContextObject;
+	
+	2. 用法
+    // 祖先组件
+    import React, { useState } from 'react';
+	import ContextObject from "@/utils/ContextObject";
+	import Son from "./Son";
+	const Father = () => {
+  		let [x, setX] = useState(10),
+    		[y, setY] = useState(10)
+
+  		return (
+    		<ContextObject.Provider
+      			value={{
+        			x,
+        			y,
+        			setX,
+        			setY
+      			}}
+    		>
+      		<div>祖先组件</div>
+      		<Son ></Son>
+    		</ContextObject.Provider>
+  		)
+	}
+	export default Father
+	
+	// 子组件
+	import React, { useContext } from 'react'
+	import Grand from './Grand'
+	import ContextObject from "@/utils/ContextObject";
+	const Son = () => {
+    	const { x, y, setX, setY } = useContext(ContextObject);
+    	console.log(x, y, setX, setY, '子组件');
+    	return (
+        	<>
+            	<span>子组件</span>
+            	<Grand></Grand>
+        	</>
+    	)
+	}
+	export default Son
+
+	// 孙组件
+	import React, { useContext } from 'react';
+	import ContextObject from "@/utils/ContextObject";
+
+	const Grand = () => {
+    	const { x, y, setX, setY } = useContext(ContextObject);
+    	console.log(x, y, setX, setY, '孙组件');
+    	return (
+        	<>
+            	<div>孙组件</div>
+        	</>
+    	);
+	}
+	export default Grand;
+```
+
+##### 三十四，样式私有化处理
+
+```js
+1. 内联样式
+2. 类名唯一
+3. css module(推荐)
+
+	注意:className="xxx" 这样定义类名无法做样式嵌套，
+    	className={style.xxx} 这样才可以做样式嵌套
+        
+ 	创建样式文件: xxx.module.less / xxx.module.css / xxx.module.scss / xxx.module.sass
+	
+	.nav {
+    	width: 100%;
+    	height: 200px;
+	}
+	// 样式混入
+	.fontSize16() {
+    	font-size: 16px;
+	}
+	.box {
+    	background-color: red;
+    	.title {
+            .fontSize16();
+        	color: aqua;
+    	}
+	}
+	// 样式穿透 
+	:global {
+    	.ant-btn {
+        	color: salmon;
+        	background-color: bisque;
+    	}
+	}
+	
+	// 引入使用
+	import React from 'react';
+	import style from './index.module.less';
+	import { Button } from 'antd';
+	const Nav = () => {
+    	return (
+        	<nav className={`${style.nav} ${style.box}`}>
+            	<h2 className={style.title} >React</h2>
+            	<Button type='primary'>Button</Button>
+        	</nav>
+    	);
+	}
+	export default Nav;
+
+4. React-jss 插件
+5. styled-components 插件
+```
+
+##### 三十五，高阶组件
+
+```
+高阶组件：
+	利用 JS 中的闭包 （柯里化函数） 实现的组件化代理
+好处：
+	可以在调用组件的时候在返回的闭包中做一些其他逻辑操作
+```
+
+<img src="./高阶组件.png" alt="高阶组件" >
+
+##### 三十六，Redux
+
+```js
+运行过程：
+	1. 在创建的 store 容器中，存储两部分内容
+		公共状态：各个组件需要共享 / 通信的信息
+		事件池：存放一些方法（让组件可以更新的方法）
+		
+		特点：当公共状态发生改变，会默认立即通知事件池中的方法执行
+			这些方法的执行，主要目的就是让指定的组件更新，而组件一更新
+			就可以获取到最新的公共状态信息进行渲染！！
+			
+	2. 修改公共容器中的状态，不能直接修改
+		基于 dispatch 派发，通知 reducer 执行
+		在 reducer 中去实现状态更新
+		
+创建步骤： 
+	1. 创建全局公共容器，储存各个组件需要的公共信息
+		const store = createStore(reducer)
+	2. 在组件内部获取公共状态信息，然后渲染
+    	store.getState()
+	3. 获取放在公共容器的事件池中的事件
+    	store.subscibe()
+	4. 创建容器对象的时候，需要传递 reducer
+    	let inital={...} // 初始状态值
+       	const reducer = (state=inital,action) =>{
+            // state 容器的状态
+            // action 派发的行为对象（必须具备 type 属性）
+            switch(action.type){
+            	// 根据传递的type值不同，修改不同的状态信息
+            }
+            // 返回的信息会替换容器的公共状态
+            return state
+        }
+	5. 派发任务，通知 reducer 执行修改状态
+    	store.dispatch({
+            type:xxx,
+            ....
+        })
+	6. 需要在根组件导入 Store, 放在上下文
+	7. 安装 Redux 相关插件，安装命令：
+    	npm i @reduxjs/toolkit redux redux-logger redux-promise redux-thunk
+```
+
+##### 三十七，创建并引入 Redux
+
+```js
+第一步：
+	当创建 Redux 完成时，
+    Redux 内部会主动调用 reducer 函数，会完成第一次执行
 ```
 
