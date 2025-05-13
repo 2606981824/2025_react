@@ -1312,6 +1312,269 @@ useContext 用法：
 ```js
 第一步：
 	当创建 Redux 完成时，
-    Redux 内部会主动调用 reducer 函数，会完成第一次执行
+    Redux 内部会主动调用 reducer 函数，会完成第一次执行，
+    reducer 的 state 会拿到定义的初始值，会先克隆一份初始值，
+    action 中的 type 属性值，Redux 内部会生成一个火星文，不会和任何逻辑匹配
+    reducer 函数返回克隆值，
+    后续 reducer 函数执行的时候，
+    然后对克隆值做出修改，再返回出去
+    
+第二步：
+	在入口文件导入 store,
+   	并且创建全局上下文文件 ancestorsContext.js
+	在入口文件中把 store 放进全局上下文
+    最后在组件中调用
+```
+
+<img src="./Redux创建.png" alt="Redux创建" >
+
+##### 三十八，使用 Redux
+
+```js
+第一步：
+	在函数组件中引入全局上下文，
+	并拿到 store 公共信息容器
+	在调用 store.getState() 方法拿到公共信息
+	
+	import React, { useContext } from 'react';
+	import ancestorsContext from '../ancestorsContext';
+	const Menu = () => {
+    	const state = useContext(ancestorsContext);
+    	const { name, age, sex } = state.getState()
+    	return (
+        	<div>
+            	<div>姓名：{name}</div>
+            	<div>年龄：{age}</div>
+            	<div>性别：{sex}</div>
+        	</div>
+    	);	
+	}
+	export default Menu;
+
+第二步：
+	实现修改公共信息刷新视图
+    创建一个状态值，然后写一个改变状态值的方法，
+    使用 store.subscribe() 把改变状态值的方法加入 store 事件池中
+    store.subscribe() 返回一个方法 unsubscribe,
+    调用 unsubscribe() 方法可以移出 store 事件池的事件
+    
+    import React, { useContext, useState, useEffect } from 'react';
+	import ancestorsContext from '../ancestorsContext';
+	const Menu = () => {
+    	const state = useContext(ancestorsContext);
+    	const { name, age, sex } = state.getState();
+    	const [num, setNum] = useState(0);
+    	const addNum = () => {
+        	setNum(num + 1);
+    	};
+    	useEffect(() => {
+        	let unsubscribe = state.subscribe(addNum);
+    	}, [])
+    	return (
+        	<div>
+            	<div>姓名：{name}</div>
+            	<div>年龄：{age}</div>
+            	<div>性别：{sex}</div>
+        	</div>
+    	);
+	}
+	export default Menu;
+
+第三步：
+	修改 store 的公共信息，
+    调用 store.dispatch() 方法，必须传一个 type 值
+    type 与 store 中的 switch 参数值相对应
+    store.dispatch({type:xxxx})
+    useEffect也需要做出调整来保证页面更新
+    
+    import React, { useContext, useState, useEffect } from 'react';
+	import { Button } from 'antd'
+	import ancestorsContext from '../ancestorsContext';
+	const Menu = () => {
+    	const state = useContext(ancestorsContext);
+    	const { name, age, sex } = state.getState();
+    	const [num, setNum] = useState(0);
+    	const addNum = () => {
+        	setNum(num + 1);
+    	};
+   		useEffect(() => {
+        	let unsubscribe = state.subscribe(addNum);
+        	return () => {
+            	unsubscribe();
+        	};
+    	}, [num]);
+    	// 修改姓名
+    	const changeName = () => {
+        	state.dispatch({
+            	type: 'changeName',
+            	name: '张三'
+        	});
+    	};
+    	// 修改年龄
+    	const changeAge = () => {
+        	state.dispatch({
+            	type: 'changeAge',
+            	age: 20
+        	});
+    	}
+    	// 修改性别
+    	const changeSex = () => {
+        	state.dispatch({
+            	type: 'changeSex',
+            	sex: '女'
+        	});
+    	}
+    	return (
+        	<div>
+            	<div>姓名：{name}</div>
+            	<div>年龄：{age}</div>
+            	<div>性别：{sex}</div>
+            	<Button onClick={changeName} >修改姓名</Button>
+            	<Button onClick={changeAge} >修改年龄</Button>
+            	<Button onClick={changeSex} >修改性别</Button>
+        	</div>
+    	);
+	}
+	export default Menu;
+
+```
+
+##### 三十九，Redux 部分源码
+
+```js
+创建一个 createStore 函数，
+函数接收一个 reducer 对象
+返回一个对象，对象有三个方法分别是：
+	getState,dispatch,subcribe
+首先判断 reducer 是不是一个函数，不是则抛出错误，
+createStore 函数定义两个变量：
+	state: 初始值，
+    listeners: 数组，储存更新状态的事件（事件池）
+然后再定义三个方法：
+	getState,dispatch,subcribe
+
+getState方法：
+	调用时，只需返回 state
+    
+subcribe方法：
+	接收一个参数
+    调用时，需要判断参数是否是一个函数，不是则抛出错误，
+    再判断 listeners 事件池中有没有把传进来的函数加进去，
+    如果没有则加入事件池，调用时返回一个函数 unsubcribe
+    调用 unsubcribe 会删除之前放在事件池的函数
+    否则会因为 Hooks 函数的闭包原因无法拿到最新的更新状态方法
+    
+dispatch方法：
+	接收一个参数
+    调用时，需要判断接收的参数是不是一个对象，不是则抛出错误
+    然后检查参数是否存在 type 属性，否则抛出错误，
+    然后调用 reducer 方法，拿到reducer 方法的返回值更新 state 公共状态值，
+    然后遍历 listenners 事件池执行里面的状态更新方法
+    最后 dispatch 方法返回接收的参数
+    
+在调用 createStore 函数时，
+内部会自行调用一次 dispatch 方法，
+所以调用dispatch({type:"@@redux/INIT"+36位的随机数并转成36进制})
+
+// 实现部分 Redux 功能
+export function createStore(reducer) {
+    let state; // 存储公共状态
+    let listeners = []; // 存储事件池(让组件更新的状态)
+    // 获取公共状态
+    const getState = () => {
+        return state;
+    }
+    // 向事件池中加入让组件更新的方法
+    const subscribe = (listener) => {
+        // 判断是否为函数
+        if (typeof listener !== 'function') throw new Error('listener must be a function');
+        // 如果没有添加过，则添加事件
+        if (!listeners.includes(listener)) {
+            listeners.push(listener);
+        }
+        // 返回一个从事件池中，移除方法的函数
+        return () => {
+            let index = listeners.indexOf(listener);
+            if (index !== -1) {
+                listeners.splice(index, 1);
+            }
+        }
+    }
+    // 派发任务通知 reducer 执行
+    const dispatch = (action) => {
+        // 校验规则
+        if (!Object.prototype.toString.call(action) === '[object Object]') throw new Error('action must be an object');
+        if (typeof action.type !== 'undefined') throw new Error('action.type must have a type property');
+        // 执行 reducer，并获取新的状态
+        state = reducer(state, action);
+        // 遍历 listeners, 执行里面的状态更新方法
+        listeners.forEach(listener => listener());
+        return action;
+    }
+    // 自动执行一次 dispatch 方法, type 为 @@redux/INIT，
+    // 源码中生成一个36位随机值，转成36进制
+    dispatch({ type: '@@redux/INIT' });
+    // 返回创建的 store 对象
+    return {
+        getState,
+        subscribe,
+        dispatch
+    };
+}
+```
+
+<img src="./Redux部分源码.png" alt="Redux部分源码" >
+
+##### 四十，Redux 工程化
+
+```js
+在项目中会存在大量的组件化开发，
+所以需要把 Redux 工程化，
+把每个组件对应的 Reducer 拆开，
+最后使用 Reducer 中的 combineReducers 合并起来
+
+demo1.js 文件：
+	let initial = {
+    	...
+	}
+	const demo1 = (state = initial, action) => {
+    	state = { ...state };
+    	switch (action.type) {
+        	case 'xxx':
+            	...
+    	}
+    	return state;
+	}
+	export default demo1;
+	
+demo2.js 文件：
+	let initial = {
+    	...
+	}
+	const demo2 = (state = initial, action) => {
+    	state = { ...state };
+    	switch (action.type) {
+        	case 'xxx':
+            	....
+    	}
+    	return state;
+	}
+	export default demo2; 
+
+reducer.js 文件
+	import { combineReducers } from "redux";
+	import demo1 from "./reducers/demo1";
+	import demo2 from "./reducers/demo2";
+	const rootReducer = combineReducers({
+    	demo1,
+    	demo2,
+	});
+	export default rootReducer;
+
+redux.js 文件
+	import { createStore } from 'redux';
+	import reducer from './reducer';
+	const store = createStore(reducer);
+	export default store;
 ```
 

@@ -6,12 +6,15 @@ import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import "dayjs/locale/zh-cn";
 import '@ant-design/v5-patch-for-react-19';
+import store from './store';
+import ancestorsContext from './ancestorsContext';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-
 root.render(
   <ConfigProvider locale={zhCN} >
+    <ancestorsContext.Provider  value={store}>
     <App />
+    </ancestorsContext.Provider>
   </ConfigProvider>,
 );
 
