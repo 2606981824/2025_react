@@ -1305,7 +1305,7 @@ useContext 用法：
     	npm i @reduxjs/toolkit redux redux-logger redux-promise redux-thunk
 ```
 
-<img src="./Redux过程.png" alt="Redux过程" >
+<img src="./redux过程.png" alt="Redux过程" >
 
 ##### 三十七，创建并引入 Redux
 
