@@ -319,7 +319,7 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
 补充说明: 第一次渲染页面是这直接从虚拟DOM转为真实DOM，但后期更新时，需要使用diff算法对比新旧DOM的差异部分，然后重新渲染差异部分
 ```
 
-<img src=".\JSX渲染.png" alt="MVVM" />
+<img src=".\JSX渲染机制.png" alt="JSX渲染" />
 
 ##### 十二，封装简单对象迭代方法
 
