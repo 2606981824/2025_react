@@ -1,20 +1,21 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import '@/index.css';
+import '@/index.less';
 import App from '@/App';
 import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import "dayjs/locale/zh-cn";
 import '@ant-design/v5-patch-for-react-19';
-import store from './store';
-import ancestorsContext from './ancestorsContext';
+import store from "./store";	//引入store文件
+import { Provider } from "react-redux"; //引入Provider
+// import { Provider } from "./myReactRedux"; //引入Provider
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <ConfigProvider locale={zhCN} >
-    <ancestorsContext.Provider  value={store}>
+    <Provider  store={store}>
     <App />
-    </ancestorsContext.Provider>
+    </Provider>
   </ConfigProvider>,
 );
 

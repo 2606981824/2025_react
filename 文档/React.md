@@ -1576,5 +1576,507 @@ redux.js 文件
 	import reducer from './reducer';
 	const store = createStore(reducer);
 	export default store;
+        
+组件内部的修改公共状态方法不变
+获取公共数据：
+	state.getState().xxx 存储的对应数据对象
+```
+
+<img src="./Redux工程化.png" alt="Redux工程化" >
+
+##### 四十一，Redux 创建以及对 Redux 工程化
+
+```js
+第一步：
+	创建 Redux 并拆分 reducer ,而后合并 reducer：
+    在 src 文件下创建 store 文件夹，在里面创建 index.js 文件
+    // store/index.js
+    import { createStore } from 'redux';
+	import reducers from './reducers';
+
+	const store = createStore(reducers);
+	export default store;
+
+	在 store 文件夹下创建 reducers 文件夹，里面创建 index.js 文件
+    // store/reducers/index.js
+    import { combineReducers } from "redux";
+	import menu from "./menu";
+	import nav from "./nav";
+	const reducers = combineReducers({
+    	menu,
+    	nav,
+	});
+	export default reducers;
+
+	在 reducers 文件夹下创建 menu.js 以及 nav.js 
+	// store/reducers/menu.js
+	import * as TYPE from './action-type'; // 导入type标识管理文件
+	let initalState = {
+    	name: 'admin',
+    	age: 18,
+    	sex: '男'
+	}
+	const menu = (state = initalState, action) => {
+    	state = { ...state };
+    	switch (action.type) {
+        	case TYPE.MENU_SET_NAME:
+            	state.name = action.payload;
+            	break
+        	case TYPE.MENU_SET_AGE:
+            	state.age = action.payload;
+            	break
+        	case TYPE.MENU_SET_SEX:
+            	state.sex = action.payload;
+            	break
+        	default:
+            	break
+    	}
+    	return state;
+	}
+	export default menu;
+
+	// store/reducers/nav.js
+	import * as TYPE from './action-type'; // 导入type标识管理文件
+	let initalState = {
+    	work: '切图仔',
+    	seniority: '1年',
+    	wages: '3k'
+	}
+	const nav = (state = initalState, action) => {
+    	state = { ...state };
+    	switch (action.type) {
+        	case TYPE.NAV_SET_WORK:
+            	state.work = action.payload;
+            	break
+        	case TYPE.NAV_SET_SENIORITY:
+            	state.seniority = action.payload;
+            	break
+        	case TYPE.NAV_SET_WAGES:
+            	state.wages = action.payload;
+            	break
+        	default:
+            	break
+    	}
+    	return state;
+	}
+	export default nav;
+
+第二步：
+	对每个 reducer 的 type 标识进行统一管理以免发生冲突：
+    在 reducers 文件夹下创建 action-type.js 文件
+    // store/reducer/action-type.js
+    // menu组件
+	export const MENU_SET_NAME = 'MENU_SET_NAME';
+	export const MENU_SET_AGE = 'MENU_SET_AGE';
+	export const MENU_SET_SEX = 'MENU_SET_SEX';
+
+	// nav组件
+	export const NAV_SET_WORK = 'NAV_SET_WORK';
+	export const NAV_SET_SENIORITY = 'NAV_SET_SENIORITY ';
+	export const NAV_SET_WAGES = 'NAV_SET_WAGES';
+    
+第三步：
+	对每个修改的 action 方法进行管理
+    在 store 文件下创建 actions 文件夹，在 actions 下创建 index.js menu.js nav.js
+	// store/action/menu.js
+	import * as TYPE from '../reducers/action-type'; // 导入type标识管理文件
+	const menu = {
+    	setName() {
+        	return TYPE.MENU_SET_NAME;
+    	},
+    	setAge() {
+        	return TYPE.MENU_SET_AGE;
+    	},
+    	setSex() {
+        	return TYPE.MENU_SET_SEX;
+    	},
+	}
+	export default menu; 
+
+	// store/action/nav.js
+	import * as TYPE from '../reducers/action-type'; // 导入type标识管理文件
+	const nav = {
+    	setWork() {
+        	return TYPE.NAV_SET_WORK;
+    	},
+    	setSeniority() {
+        	return TYPE.NAV_SET_SENIORITY;
+    	},
+    	setWages() {
+        	return TYPE.NAV_SET_WAGES;
+    	},
+	}
+	export default nav; 
+
+	// store/actions/index.js
+	import menu from './menu'
+	import nav from './nav'
+
+	export default {
+    	menu,
+    	nav
+	}
+
+最后在组件调用公共数据以及修改数据的方法
+```
+
+<img src="./Redux工程化使用.png" alt="Redux工程化使用" >
+
+##### 四十二，手写 Redux 的 combineReducers 部分源码
+
+```js
+const myCombineReducers = (reducers) => {
+    let reducersKeys = Reflect.ownKeys(reducers);
+    // 返回一个合并后的 reducer
+    return (state = {}, action) => {
+        // 把 reducers 中的每一个 reducer(每个模块的reducer) 都执行一遍
+        let netxState = {};
+        reducersKeys.forEach((key) => {
+            let reducer = reducers[key];
+            netxState[key] = reducer(state[key], action)
+        })
+        return netxState;
+    }
+};
+export default myCombineReducers;
+```
+
+<img src="./Redux关系图.png" alt="Redux关系图" >
+
+##### 四十三，React-Redux
+
+```js
+安装 react-redux npm i react-redux
+使用 react-redux
+
+第一步：
+	在入口文件中，引入 store 文件以及 react-redux 中的 Provider 组件
+    Provider 组件可以接收一个 store
+    
+    import React from 'react';
+	import ReactDOM from 'react-dom/client';
+	import '@/index.less';
+	import App from '@/App';
+	import { ConfigProvider } from 'antd';
+	import zhCN from 'antd/locale/zh_CN';
+	import "dayjs/locale/zh-cn";
+	import '@ant-design/v5-patch-for-react-19';
+	import store from "./store";	//引入store文件
+	import { Provider } from "react-redux"; //引入Provider
+
+	const root = ReactDOM.createRoot(document.getElementById('root'));
+	root.render(
+  		<ConfigProvider locale={zhCN} >
+    		<Provider  value={store}>
+    			<App />
+    		</Provider>
+  		</ConfigProvider>,
+	);
+
+第二部：
+	在组件内部使用 react-redux 公共信息
+    利用 react-redux 内部的 connect 方法，
+    
+    connect((state)=>{},(dispatch)=>{}):接收两个回调函数
+    第一个回调函数返回可以在 state 获取所以公共信息，需要用到的公共信息在回调函数返回即可
+    第二个回调函数返回修改公共信息的方法，用法如下
+    
+    export default connect(
+    	(state) => state.menu,
+        (dispatch) => ({
+        	changeName: () => dispatch({ type: menu.setName(), payload: '张三' }),
+        	changeAge: () => dispatch({ type: menu.setAge(), payload: 20 }),
+        	changeSex: () => dispatch({ type: menu.setSex(), payload: '女' })
+    	})
+	)(Index);
+	
+	dispatch 的第二种用法
+    connect() 组件
+    会在组件的 props 中自动加一个 dispatch 方法，直接调即可
+    
+    connect((state)=>需要什么数据，就返回什么数据即可，(dispatch)=>{})(组件)
+	state:公共信息
+    dispatch:修改公共信息
+    然后在组件的 props 中可以获取需要用到公共信息
+    
+    import React, { useContext, useState, useEffect } from 'react';
+	import { Button } from 'antd';
+	import menu from '@/store/actions/menu';
+	import { connect } from 'react-redux';
+	const Index = (props) => {
+    	const { name, age, sex } = props; // 使用公共信息
+    	const changeName = () => { };
+   		const changeAge = () => { }
+    	const changeSex = () => { }
+    	return (
+        	<div>
+            	<div>姓名：{name}</div>
+            	<div>年龄：{age}</div>
+            	<div>性别：{sex}</div>
+            	<Button onClick={changeName} >修改姓名</Button>
+            	<Button onClick={changeAge} >修改年龄</Button>
+            	<Button onClick={changeSex} >修改性别</Button>
+        	</div>
+    	);
+	}
+	export default connect(
+    	(state) => state.menu,
+	)(Index); // 调用 connect 方法并返回需要的公共数据
+    
+第三步：
+	调用 dispatch 修改信息
+    dispatch 的第二种用法
+    connect()(组件)，
+    会在在组件的 props 中自动加一个 dispatch 方法，直接调用即可
+    
+    import React, { useContext, useState, useEffect } from 'react';
+	import { Button } from 'antd';
+	import menu from '@/store/actions/menu';
+	import { connect } from 'react-redux';
+	const Index = (props) => {
+    	const { name, age, sex, dispatch } = props;// 使用公共信息
+    	const changeName = () => {
+        	dispatch({ type: menu.setName(), payload: '张三' })
+    	};
+    	const changeAge = () => {
+        	dispatch({ type: menu.setAge(), payload: 20 })
+    	}
+    	const changeSex = () => {
+        	dispatch({ type: menu.setSex(), payload: '女' })
+    	}
+    	return (
+        	<div>
+            	<div>姓名：{name}</div>
+            	<div>年龄：{age}</div>
+            	<div>性别：{sex}</div>
+            	<Button onClick={changeName} >修改姓名</Button>
+            	<Button onClick={changeAge} >修改年龄</Button>
+            	<Button onClick={changeSex} >修改性别</Button>
+        	</div>
+    	);
+	}
+	export default connect(
+    	(state) => state.menu,
+	)(Index); // 调用 connect 方法并返回需要的公共数据
+
+```
+
+##### 四十四，手写 React-redux 部分源码
+
+```js
+第一步：
+	首先 React-redux 需要导出一个 Provider 组件
+	Provider 组件 需要接收一个 store 公共信息
+	并且要把这个 store 公共信息传递 Provider 组件下所有的子组件
+	所以需要用全局上下文，createContext 创建全局上下文
+	返回 <Context.Provider value={{store}}>{children}</Context.Proverder>;
+	
+第二部：
+	React-redux 还需要导出一个 connect 方法
+	connect 方法接收两个参数：
+		mapStateToProps:不是必传，
+		mapDispatchToProps:不是必传，
+	connect 方法返回一个 currying 函数，
+	需要判断 mapStateToProps 和 mapDispatchToProps 这两个参数都不传的情况下：
+		mapStateToProps 等于一个函数，该函数接收一个参数，参数默认是对象，并返回出去
+		mapDispatchToProps 等于一个函数，该函数接收一个参数，参数是 dispatch,并返回去除 {  dispatch }
+		connect 方法返回 currying 函数：接收一个参数，参数是一个组件（Component）
+		currying 函数返回一个高阶组件 HOC
+		高阶组件 HOC 返回的是 currying 函数接收的组件（Component）
+		高阶组件 HOC 需要把自身接收到的 props 传递给 Component 组件
+		高阶组件 HOC 内首先要用 useContext 拿到创建号的全局上下文 store,
+        并解构出 store 中的 getState 和 dispatch 以及 subcribe 这三个方法
+        首先需要在 useEffect 中调用 subscribe 函数并把刷新页面的状态函数传递进去
+        然后在调用 getState 方法 拿到state 公共数据并且传递给 Component 组件
+        最后在判断 mapDispatchToProps 是否是一个函数，是的话，直接调用 并把dispatch 传递进去
+        如果不是，那么就需要调用 Redux 中的 bindActionCreators 方法
+        把 mapDispatchToProps 和 dispatch 依次传递进去，在赋值给新的变量，把这个新的变量传递给 Component 组件
+        
+
+import React, {
+    createContext,
+    useContext,
+    useEffect,
+    useState,
+    useMemo
+} from "react";
+import { bindActionCreators } from "redux";
+const Context = createContext();
+// Provider
+export const Provider = (props) => {
+    let { store, children } = props;
+    return (
+        <Context.Provider value={{ store }}>
+            {children}
+        </Context.Provider>
+    )
+}
+// connect
+export const connect = (mapStateToProps, mapDispatchToProps) => {
+    if (!mapStateToProps) {
+        mapStateToProps = (obj = {}) => obj;
+    }
+    if (!mapDispatchToProps) {
+        mapDispatchToProps = (dispatch) => {
+            return {
+                dispatch
+            }
+        };
+    }
+    return function currying(Component) {
+        return function HOC(props) {
+            const { store } = useContext(Context);
+            const { getState, dispatch, subscribe } = store;
+            let [, forceUpdate] = useState(0);
+            useEffect(() => {
+                let unSubscribe = subscribe(() => {
+                    forceUpdate(+new Date())
+                })
+                return () => {
+                    unSubscribe()
+                }
+            }, [])
+            const state = getState();
+            // 将 state 缓存起来
+            const newState = useMemo(() => mapStateToProps(state), [state]);
+            let newDispatch = {};
+            if (typeof mapDispatchToProps === 'function') {
+                newDispatch = mapDispatchToProps(dispatch);
+            } else {
+                newDispatch = bindActionCreators(mapDispatchToProps, dispatch);
+            }
+            return <Component
+                {...props}
+                {...newState}
+                {...newDispatch}
+            />
+        }
+    }
+}
+```
+
+##### 四十五，Redux-Tookit
+
+```js
+第一步：
+	创建 store 文件夹，在 store 文件夹下创建 index.js 文件
+    import { configureStore } from "@reduxjs/toolkit";
+	import menu from "./menu";
+	const store = configureStore({
+    	reducer: {
+        	menu,
+    	},
+	})
+	export default store;
+
+	在 store 文件下创建 menu.js 文件
+    import { createSlice } from "@reduxjs/toolkit";
+	const menuSlice = createSlice({
+    	name: "menu",
+    	initialState: {
+        	name: 'admin',
+        	age: 18,
+        	sex: '男',
+        	arr: []
+    	},
+    	reducers: {
+        	setName(state, action) {
+            	state.name = action.payload
+        	},
+        	setAge(state, action) {
+            	state.age = action.payload
+        	},
+        	setSex(state, action) {
+            	state.sex = action.payload
+        	},
+        	setArr(state, action) {
+            	state.arr = action.payload
+        	},
+    	}
+        middleware:['中间件','中间件']
+	});
+	export const { setName, setAge, setSex, setArr } = menuSlice.actions;
+	// 异步调用
+	export const setNameAsync = () => {
+    	return async (dispatch) => {
+        	try {
+            	let res = await fetch('/jian/subscriptions/recommended_collections')
+            	let data = await res.json()
+            	dispatch(setArr(data))
+        	} catch (err) {
+            	console.log(err)
+        	}
+    	}
+	}
+	export default menuSlice.reducer;
+
+第二步：
+	在入口文件中引入 store 文件，并使用 react-redux 中的 Provider
+    import React from 'react';
+	import ReactDOM from 'react-dom/client';
+	import '@/index.less';
+	import App from '@/App';
+	import { ConfigProvider } from 'antd';
+	import zhCN from 'antd/locale/zh_CN';
+	import "dayjs/locale/zh-cn";
+	import '@ant-design/v5-patch-for-react-19';
+	import store from "./store";	//引入store文件
+	import { Provider } from "react-redux"; //引入Provider
+	const root = ReactDOM.createRoot(document.getElementById('root'));
+	root.render(
+  		<ConfigProvider locale={zhCN} >
+    		<Provider  store={store}>
+    			<App />
+    		</Provider>
+  		</ConfigProvider>,
+	);
+
+第三步：
+	在组件内使用
+    import { useEffect, useMemo } from 'react';
+    import { Button } from 'antd';
+	import { useDispatch, useSelector } from 'react-redux';
+	import { setName, setAge, setSex } from '../store/menu';
+	const Menu = () => {
+    	const dispatch = useDispatch();
+    	const { name, age, sex } = useSelector(state => state.menu);
+    	const changeName = () => {
+        	dispatch(setName('张三'))
+    	};
+    	const changeAge = () => {
+        	dispatch(setAge(20))
+    	}
+    	const changeSex = () => {
+        	dispatch(setSex('女'))
+    	}
+        useEffect(() => {
+        	dispatch(setNameAsync())
+    	}, [])
+    	const newName = useMemo(() => {
+        	return `我是${name}`
+    	}, [name])
+    	return (
+        	<div>
+            	<div>姓名：{name}</div>
+            	<div>年龄：{age}</div>
+            	<div>性别：{sex}</div>
+				<div>{newName}</div>
+            	<Button onClick={changeName} >修改姓名</Button>
+            	<Button onClick={changeAge} >修改年龄</Button>
+            	<Button onClick={changeSex} >修改性别</Button>
+        	</div>
+    	);
+	}
+	export default Menu;
+```
+
+##### 四十六，React-router
+
+```
+SPA:一个页面，许多个组件
+	不利于 SEO 优化，公共资源只需要加载一次，跳转时主页面不刷新，组件之间的切换，数据传递方式多样化，可以本地储存以及全局变量和组件通信等等
+	
+MPA:许多个完整的页面
+	可以直接做 SEO 优化，公共资源需要重新加载，跳转时整个 HTML 页面切换，全局刷新，数据传递只能基于本地存储以及 url 查询字符串
 ```
 
