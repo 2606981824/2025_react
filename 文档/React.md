@@ -2067,16 +2067,321 @@ export const connect = (mapStateToProps, mapDispatchToProps) => {
         	</div>
     	);
 	}
-	export default Menu;
+	export default Menu
 ```
 
 ##### 四十六，React-router
 
-```
+```js
 SPA:一个页面，许多个组件
 	不利于 SEO 优化，公共资源只需要加载一次，跳转时主页面不刷新，组件之间的切换，数据传递方式多样化，可以本地储存以及全局变量和组件通信等等
 	
 MPA:许多个完整的页面
 	可以直接做 SEO 优化，公共资源需要重新加载，跳转时整个 HTML 页面切换，全局刷新，数据传递只能基于本地存储以及 url 查询字符串
+```
+
+##### 四十七，React-router-dom v5版本
+
+```jsx
+react-router-dom 两种路由模式：
+	哈希路由: HashRouter
+	history路由:BrowserRouter
+	
+import { HashRouter, Route, Switch, Redirect, Link } from 'react-router-dom';
+	HashRouter: 哈希路由
+    Route: 匹配路由
+    Switch: 只匹配一个路由
+	Redirect: 重定向
+    Link: 路由跳转
+    
+所有的路由都需要 HashRouter 或者 BrowserRouter 标签包裹起来
+	<HashRouter>
+    	<Route></Route>
+	<HashRouter>
+
+Route:
+	path 和 component 属性必填
+    path: 路径
+    component: 页面文件
+    <Route patch="xx" component={xx}></Route>
+
+Switch: 确保路由只会匹配一项，匹配成功后则不会继续向下匹配
+	<HashRouter>
+        <Switch>
+    		<Route exact></Route>  exact：开启精准匹配，只会匹配路由名称完全相同对的页面
+        	<Redirect to="/" />    重定向：当匹配所有的路由不成功时则会重定向到 to 属性指定的页面
+        </Switch>	
+	<HashRouter>
+        
+Redirect:
+	from: 从哪一个地址过来的
+    to: 重定向的地址
+    exact: 对 from 的地址精准匹配
+```
+
+<img src="./路由V5.png" alt="路由V5.png" >
+
+##### 四十八，React-router-dom v5 版本 多级路由
+
+```js
+Route:
+	这个组件的 component 属性也可以用 render 这个属性代替
+	render: 接收一个函数，地址匹配上时会执行这个函数
+    <Route
+		path="/"
+		render={()=>{
+            这里可以写一些逻辑
+            return <组件 />
+        }}
+	></Route>
+```
+
+<img src="./多级路由.png" alt="多级路由.png" >
+
+##### 四十九，构建路由表统一管理路径
+
+```js
+/*
+	配置路由表：
+		数组，数组中的每一项就是一个需要配置的路由规则
+		+ redirect: true 重定向
+		+ from: 来源的地址
+		+ to: 重定向的地址
+		+ exact: 是否精准匹配
+		+ path: 路由的路径
+		+ component: 路由对应的组件
+		+ name: 路由名称
+		+ meta: {} 路由元信息
+		+ children: [] 子路由
+*/
+
+在 src 创建 router 文件夹
+在 router 文件夹创建 index.js 和 routers.js 文件
+第一步：
+	routers.js 文件下配置号对应的路由信息
+    import A from '../views/A'
+	import B from '../views/B'
+	import C from '../views/C'
+	import A1 from '../views/A/a1'
+	import A2 from '../views/A/a2'
+	import A3 from '../views/A/a3'
+	const routers = [
+    	{
+        	redirect: true,
+        	from: '/',
+        	to: '/a',
+        	exact: true
+    	},
+    	{
+        	path: '/a',
+        	component: A,
+        	name: 'a',
+        	meta: {},
+        	children: [
+            	{
+                	redirect: true,
+                	path: 'a1',
+                	component: A1,
+                	name: 'a1',
+                	meta: {}
+            	},
+            	{
+                	path: 'a2',
+                	component: A2,
+                	name: 'a2',
+                	meta: {}
+            	},
+            	{
+                	path: 'a3',
+                	component: A3,
+                	name: 'a3',
+                	meta: {}
+            	}
+        	]
+    	},
+    	{
+        	path: '/b',
+        	component: B,
+        	name: 'b',
+        	meta: {}
+    	},
+    	{
+        	path: '/c',
+        	component: C,
+        	name: 'c',
+        	meta: {}
+    	},
+    	{
+        	redirect: true,
+        	to: '/a',
+    	}
+	]
+	export default routers
+    
+第二步：
+	在 index.js 下循环出路由
+    import React from "react";
+	import { Redirect, Route, Switch } from "react-router-dom";
+	const RouteView = (props) => {
+    	let { routers } = props;
+    	return (
+        	<Switch>
+            	{
+                	routers.map((item, index) => {
+                    	let { redirect, from, to, exact, path, component: Component } = item
+                    	let config = {};
+                    	if (redirect) {
+                        	config = { to }
+                        	if (from) {
+                            	config.from = from;
+                        	}
+                        	if (exact) {
+                            	config.exact = exact;
+                        	}
+                        	return <Redirect key={index} {...config} />
+                    	}
+                    	config = { path }
+                    	if (exact) {
+                        	config.exact = exact;
+                    	}
+                    	return (
+                        	<Route
+                            	key={index}
+                            	{...config}
+                            	render={() => {
+                                	return (
+                                    	<Component />
+                                	)
+                            	}}
+                        	/>
+                    	)
+                	})
+            	}
+        	</Switch>
+    	)
+	}
+	export default RouteView;
+
+第三步：
+	在组件中使用
+    import React from 'react';
+	import { HashRouter, Route, Switch, Redirect, Link } from 'react-router-dom';
+	import RouterView from './router';
+	import routers from './router/routers';
+	const App = () => {
+    	return (
+        	<HashRouter>
+            	{/* 导航部分 */}
+            	<nav>
+                	<Link to="/a">A</Link>
+                	<Link to="/b">B</Link>
+                	<Link to="/c">C</Link>
+            	</nav>
+            	{/* 路由容器：每一次页面加载或者路由切换完毕，都会根据当前的哈希值，到这里和每一个 Router 进行匹配 */}
+            	<div>
+                	<RouterView routers={routers}></RouterView>
+           	 	</div>
+        	</HashRouter>
+    	)
+	}
+	export default App
+
+```
+
+##### 五十，路由懒加载
+
+```js
+/*
+	路由在不使用懒加载的情况下，第一次加载页面的时候，从服务器获取整个 JS 文件就会用很久的事件，
+	导致此阶段，页面一致处于白屏状态
+*/
+优化方案：
+	分割打包: 每个组件会单独打包为一个JS， 
+    按需导入/加载: 最开始不会加载，只有路由匹配成功才会去加载
+    按需异步加载 JS ===> 路由懒加载
+	在 React 提供了一个 lazy 懒加载方法
+    lazy方法：
+    lazy(()=> import('../组件'))
+	lazy(()=> import(/* webpackChunkName:"Achild" */ "../A/A1"))
+					/* webpackChunkName:"Achild" */: 可以配置该文件打包在 Achild.js 文件中
+                    
+    同时还需要 Suspense 组件包裹以及渲染了的组件
+    	Suspense 组件：
+        	有一个 fallback 属性：组件还未加载出来的时候会渲染 fallback 属性的内容
+            <Suspense fallback={<>正在加载中...</>}>
+                <Component></Component>
+            </Suspense>
+```
+
+<img src="./路由懒加载.png" alt="路由懒加载.png" >
+
+##### 五十一，获取到路由中的相关信息以及路由跳转
+
+```js
+方法一：
+	在 react-router-dom 中有四个 hooks 方法
+		useHistory,
+		useLocation,
+		useRouteMatch,
+		useParams,
+	以上这几个方法可以拿到路由相关信息
+
+方法二：
+	在封装的 RouterView 的 Router 中使用的 render 方法中可以接收到一个 props 中也可以拿到，拿到后传递给组件即可
+	
+路由跳转：
+	编程式
+    在 history 对象下存在以下几个方法
+    1. go
+    2. goBack
+    3. goForward
+    4. push
+    5. replace
+    前三个方法是前进后退
+    第四个方法是直接跳转到某一个页面，会新增历史记录
+    四五个方法是直接跳转到某一个页面，是替换当前历史记录
+    
+    导航式
+    使用 Link 路由跳转
+    <Link to="路由地址" ><Link>
+    <Link to={{
+    	pathname:'路由名称'
+        search:"url传参"
+        state:{ 隐式传参 }
+             }}>
+    </Link>
+	<Link to="路由地址" replace ><Link> 不再是新增一条历史记录，而是替换对应历史记录
+
+路由传参：
+	接收：
+    在 location 中对象下存在的属性都是有上一个路由跳转过来的携带的参数
+    该对象下存在 pathname,state,search,hash
+	
+	传递：
+    props.history.push({
+        pathname:"/c",
+        state:{ name:'c' },
+        search:"?name=c",
+    })
+
+注意项：
+	只有在 react-router-dom 中的 <HashRouter></HashRouter> 包裹的组件，才能拿到对应的路由信息
+```
+
+<img src="./路由属性.png" alt="路由属性.png" >
+
+##### 五十二，NavLink 和 Link 的区别
+
+```
+语法以及用法一样
+区别：
+	Navlink:
+		每次页面加载或者路由切换完毕，都会那最新的路由地址，和 NavLink 中 to 指定的地址进行匹配，匹配上一样的，会默认设置 active 选中的样式，也可以基于 activeClassName 重定向样式类名
+```
+
+##### 五十三，react-router-dom @6 版本
+
+```
+移除了
 ```
 
