@@ -406,7 +406,7 @@ JSX：javaScript and html（xml）把 js 和 HTML 标签混合在一起，JSX �
 
 ##### 十五，函数组件的插槽机制
 
-```jsx
+```js
 使用 props.children
 
 默认插槽
@@ -2381,7 +2381,320 @@ Route:
 
 ##### 五十三，react-router-dom @6 版本
 
+```js
+移除了： Switch, Redirect, withRouter
+
+Switch ===> Routers:被 Routers 替代
+
+Router:
+	语法也发生变化，不在需要 exact 做精准匹配，自带精准匹配
+    <Router path="地址" element={<组件></组件>}></Router>
+                               
+Redirect ===> Navigate:
+	被 Navigate 替代，而且不能直接放在 Routers 下作为它的子组件，
+    只能放在 Route 的 element 属性作为它的属性值
+    path="/a/:id?"
+    	id: params 参数
+       	?: 可传可不传                       
+                               	
+    <Route path="/" element={<Navigate to="/a" ></Navigate>}></Route>
+    <Route path="/a/:id?" element={<Navigate to={{
+    	pathname:'/a',
+        search:'?from=404'         
+    }} ></Navigate>}></Route>
+                               
+useNavigate:
+	替代了 push和replace
+    import { useNavigate } from "react-router-dom"
+	const navigate = useNavigate()
+    navigate("地址")
+	navigate("地址",{replace:true}) // 不新增历史记录
+	naviagete({
+        pathName:"地址"，
+        search:"url传参"
+    })
+	navigate("地址"，{
+    	replace:true,
+        state:{"隐式传参"} // 刷新页面 state 的数据不会丢失
+    })
 ```
-移除了
+
+<img src="./路由V6.png" alt="路由V6.png" >
+
+##### 五十四，对 react-router-dom @6 路由表统一管理
+
+```js
+在 srcc 下创建 router 文件夹
+在 router 文件夹创建 index.js 和 router.js 文件
+
+第一步：
+	在 router.js 文件配好路由表信息
+	import { lazy } from 'react';
+	import { Navigate } from 'react-router-dom';
+	const routes = [
+    	{
+        	path: '/',
+        	element: () => <Navigate to="/a" ></Navigate>
+    	},
+    	{
+        	path: '/a',
+        	name: 'a',
+        	element: lazy(() => import('../views/A')),
+        	meta: {},
+        	children: [
+            	{
+                	path: '/a',
+                	element: () => <Navigate to="/a/a1" ></Navigate>
+            	},
+            	{
+                	path: 'a1',
+                	name: 'a1',
+                	element: lazy(() => import('../views/A/a1')),
+                	meta: {}
+            	},
+            	{
+                	path: 'a2',
+                	name: 'a2',
+                	element: lazy(() => import('../views/A/a2')),
+                	meta: {}
+            	},
+            	{
+                	path: 'a3',
+                	name: 'a3',
+                	element: lazy(() => import('../views/A/a3')),
+                	meta: {}
+            	},
+        	]
+    	},
+    	{
+        	path: '/b',
+        	name: 'b',
+        	element: lazy(() => import('../views/B')),
+    	},
+    	{
+        	path: '/c/:id?',
+        	name: 'c',
+        	element: lazy(() => import('../views/C')),
+    	},
+	]
+	export default routes
+	
+	在 index.js 下循环出路由
+	import React, { Suspense } from "react";
+	import { Route, Routes, useNavigate, useLocation, useParams, useSearchParams } from "react-router-dom";
+	import routes from "./routes";
+	const Elements = (props) => {
+    	let { element: Element } = props;
+    	const navigate = useNavigate();
+    	const location = useLocation();
+    	const params = useParams();
+    	const [searchParams] = useSearchParams();
+    	const routingInfo = {
+        	navigate,
+        	location,
+        	params,
+        	searchParams
+    	}
+    	return <Element {...routingInfo} />
+	}
+	const createRouter = (routes) => {
+    	return (
+        	<>
+            	{routes.map((item, index) => {
+                	let { path } = item;
+                	return (
+                    	<Route
+                        	key={index}
+                        	path={path}
+                        	element={<Elements {...item} />}
+                    	>
+                        	{item.children &&
+                            	item.children.length > 0 &&
+                            	createRouter(item.children)
+                        	}
+                    	</Route>
+                	)
+            	})}
+        	</>
+    	)
+	}
+	const RouterView = () => {
+    	return (
+        	<Suspense fallback={<>正在加载中...</>} >
+            	<Routes>{createRouter(routes)}</Routes>
+        	</Suspense>
+    	)	
+	}
+	export default RouterView;
+	
+	export const widthRouter = (Component) => {
+    	return (props) => {
+        	const navigate = useNavigate()
+        	const location = useLocation()
+        	const params = useParams()
+        	const [searchParams] = useSearchParams()
+        	const routingInfo = {
+            	navigate,
+            	location,
+            	params,
+            	searchParams
+        	}
+        	return <Component {...props} {...routingInfo} />
+    	}	
+	}
+	
+	在组件中使用
+	import React from 'react';
+	import { HashRouter, NavLink } from 'react-router-dom';
+	import RouterView from './router'
+	const App = () => {
+    	return (
+        	<HashRouter>
+            	{/* 导航部分 */}
+            	<nav>
+                	<NavLink to="/a">A</NavLink>
+                	<NavLink to="/b">B</NavLink>
+                	<NavLink to={{
+                    	pathname: '/c/1',
+                    	search: '?from=404',
+                	}}>C</NavLink>
+            	</nav>
+            	<div>
+                	<RouterView></RouterView>            
+            	</div>
+        	</HashRouter>
+    	)
+	}
+```
+
+##### 五十五，配置样式全局变量
+
+```
+安装 style-resources-loader
+命令 npm i style-resources-loader
+
+在 config 文件夹下的 webpack.config.js文件
+
+在 src 目录下 创建 common.less 文件
+
+需要配置 scss 或者 sass 就创建 common.scss/common.sass
+```
+
+<img src="./style-resources-loader使用.png" alt="style-resources-loader使用.png" >
+
+##### 五十六，useReducer
+
+```js
+类似 redux
+用法：接收两个参数
+	参数1: reducer 方法
+	参数2: 初始值对象
+	const A1 = () => {
+    	const reducer = (state, action) => {
+        	state = { ...state };
+        	switch (action.type) {
+            	case 'add':
+                	return { count: state.count + 1 }
+            	case 'minus':
+                	return { count: state.count - 1 }
+            	default:
+                	throw new Error();
+        	}
+    	}
+    	const [state, dispatch] = useReducer(reducer, { count: 0 });
+    	return (
+        	<div>
+            	A1组件
+            	<div>{state.count}</div>
+            	<Button onClick={() => dispatch({ type: 'add' })} >加</Button>
+            	<Button onClick={() => dispatch({ type: 'minus' })} >减</Button>
+        	</div>
+    	);
+	}
+	export default A1;
+	
+```
+
+##### 五十七，Rem响应式布局处理
+
+```js
+Rem 响应式布局开发
+	1. 按参照的比例（设计稿通常是 750px）,在这个比例下，给根节点的 fontSize 设置一个初始值
+		750px 设计稿中，1Rem = 100px
+		
+	2. 我们需要根据当前设备的宽度，计算相当于设计稿的缩放比例
+	 
+    在 HTML 文件中
+	// 计算当前设备下，rem和 px 的换算比例
+		(function (){
+			const computed = () => {
+				// 获取设备宽度
+                let html = document.documentElement,
+                    deviceW = html.clientWidth,
+                    designW = 750;
+                let ratio=deciceW*100/750
+                html.style.fontSize = ratio + 'px'
+			}
+            computed();
+        	window.addEventListener('resize',computed);
+		})()
+
+插件：
+	lib-flexible : 设置 rem 和 px 换算比例
+	postcss-pxtorem : 自动将 px 换算成  rem
+安装命令：
+	npm i lib-flexible --save
+	npm i postcss-pxtorem --save
+    
+    在 config 文件夹下的 webpack.config.js文件配置
+	在 index.jsx 中导入 lib-flexible
+	设置最大宽度 在 index.jsx 文件下
+    	// 处理最大宽度
+		(function (){
+  			const handleMax = function (){
+    			let html = document.documentElement,
+        		root = document.querySelector('#root'),
+        		size = parseFloat(html.style.fontSize)
+        		html.style.maxWidth = '750px'
+        		if(size >= 75){
+          			root.style.fontSize = '75px'
+        		}
+  			}
+  			handleMax()
+		})()
+```
+
+<img src="./Rem布局响应式设置.png" alt="Rem布局响应式设置.png" >
+
+<img src="./lib-flexible使用.png" alt="lib-flexible使用.png" >
+
+##### 五十八，React组件缓存
+
+```js
+安装 keepalive-react-component
+命令 npm i keepalive-react-component
+
+import { KeepAliveProvider, widthKeepAlive  } from "keepalive-react-component";
+
+KeepAliveProvider:
+	<KeepAliveProvider>
+        需要缓存的路由配置表
+    </KeepAliveProvider>
+
+widthKeepAlive:
+	widthKeepAlive(组件，{ cacheId: '定义一个id', scroll: true })
+    scroll: 缓存页面滚动的位置
+    
+注意：
+	widthKeepAlive 包裹的组件，如果有子路由，会使其不渲染，这是keepalive-react-component 与 react-router-dom 的兼容性问题导致的，推荐使用 react-activation
+```
+
+<img src="./React组件缓存.png" alt="React组件缓存.png" >
+
+##### 五十九，React中的 DOM-DIFF 算法和 Fiber 算法
+
+```
+在 React16 及以前：新老虚拟 DOM 对比
+在 React17 及以后：老的 DOM 会构建出 Fiber 链表，拿到最新创建的虚拟 DOM 和 Fiber 链表做对比
 ```
 

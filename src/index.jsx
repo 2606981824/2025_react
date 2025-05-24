@@ -8,7 +8,21 @@ import "dayjs/locale/zh-cn";
 import '@ant-design/v5-patch-for-react-19';
 import store from "./store";	//引入store文件
 import { Provider } from "react-redux"; //引入Provider
-// import { Provider } from "./myReactRedux"; //引入Provider
+// REN
+// import 'lib-flexible';
+// 处理最大宽度
+(function (){
+  const handleMax = function (){
+    let html = document.documentElement,
+        root = document.querySelector('#root'),
+        size = parseFloat(html.style.fontSize)
+        html.style.maxWidth = '750px'
+        if(size >= 75){
+          root.style.fontSize = '75px'
+        }
+  }
+  handleMax()
+})()
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
