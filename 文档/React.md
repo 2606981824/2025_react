@@ -2693,8 +2693,192 @@ widthKeepAlive:
 
 ##### 五十九，React中的 DOM-DIFF 算法和 Fiber 算法
 
-```
+```js
 在 React16 及以前：新老虚拟 DOM 对比
 在 React17 及以后：老的 DOM 会构建出 Fiber 链表，拿到最新创建的虚拟 DOM 和 Fiber 链表做对比
+
+优化原则
+	1. 深度优先原则：会先比较元素的后代元素，一级一级的比下去
+	2. 同级对比：只会比较处于同一级别的元素
+	3. 不同类型的元素，会产生不同的结构：销毁老结构，创建新结构
+	4. 可以通过 key 标识移动的元素：如果不设置 key，则默认元素的“索引”就是 key
+	
+处理规则：
+	key 和 “类型”都相同：更新复用老节点
+	key和“类型”只要有一个不同：删除老的，插入新的
+
+具体处理步骤
+	第一轮循环：遍历 Fiber 链表，去虚拟 DOM 中找到相同位置的新节点，进行对比（不是按照 key 比，按照位置比），对比的时候，先看 key
+		key 一样：再看标签和内容
+			标签一样，内容也一样，则复用旧节点（啥都不处理）
+			标签一样，内容不一样，则把旧节点标记为“更新”
+			标签不一样，则旧节点标记为“删除”，新节点标记为“新增”
+		key不一样：直接跳出第一轮循环
+		
+	第二轮循环：根据 Fiber 链表，创建 Map 查找映射表，遍历虚拟 DOM，查找 Map 映射表
+		Map = { A:就节点，B：旧节点，... }  以 key 作为属性名，节点作为属性值
+		从虚拟 DOM 的第一个节点开始遍历（第一轮循环处理过的可以不用管了），没处理过的则去 Map 映射表中，找到“相同key”的旧节点进行对比，按照 key 进行比较
+		找到相同 key 的旧节点：
+			先对比标签和内容
+			然后拿旧节点的权重值（旧索引值）再和全局的最高权重值（lastPlacedIndex）进行比较，来决定位置是否挪动			
+		找不到相同 key 的旧节点：
+			说明此节点需要新增，标记为“新增”
+    
+	第二轮结束后，把没有比较过的旧节点，标记为“删除”
+    
+如果组件更新后，节点的 key 值和节点所在的“顺序”没有变化过，只需要经过第一轮循环，就可以分析出：节点的更新规则，这种情况，DOM-DIFF 计算的性能也会提高
+			
+```
+
+##### 六十，Iterator 迭代器和 for-of 原理
+
+```js
+手写 Iterator 迭代器
+	// 创建一个 Iterator 类
+	class Iterator {
+    	constructor(assenble) {
+        	// assenble 需要迭代的数据结构
+        	this.assenble = assenble;
+        	// index 记录迭代的次数
+        	this.index = -1;
+    	}
+    	next() {
+        	this.index++;
+        	let { assenble, index } = this;
+        	if (this.index >= assenble.length) {
+            	// 迭代完成
+            	// 需要将 index 重置为 -1
+            	this.index = -1;
+            	return {
+                	done: true,
+                	value: undefined
+            	}
+        	}
+        	return {
+            	done: false,
+            	value: assenble[index]
+        	}
+    	}
+	}
+/*
+    创建一个实例对象，其应该具备迭代器规范要求
+        itor.next() 具备 next 方法，执行这个方法可以依次获取到数据结构中的每一个成员值
+        每一次获取的成员值是一个对象
+            done: // 是否迭代完成
+            value: // 迭代到的成员值
+*/
+
+for-of 不可以遍历对象，可以在对象原型上新增 Symbol.iterator 迭代器
+
+	Object.prototype[Symbol.iterator] = function iterator() {
+    	let self = this;
+    	let index = -1;
+    	let keys = Reflect.ownKeys(self)
+    	return {
+        	next() {
+            	index++;
+            	if (index >= keys.length) {
+                	index = -1;
+                	return {
+                    	done: true,
+                    	value: undefined
+                	}
+            	}
+           		let key = keys[index]
+            	return {
+                	done: false,
+                	value: self[key]
+            	}
+        	}
+    	}
+	}
+```
+
+##### 六十一，Generator 和 await 原理
+
+```js
+async/await 原理：基于 Promise 和 Generator 函数实现
+    
+/*
+    创建一个 Generator 生成器函数，
+    在创建的函数“function”后面加一个“*”即可
+    ES6 语法：*函数
+    箭头函数无法变成生成器函数
+    每一个生成器函数，都是 GeneratorFunction 的实例，
+    然后再是 Function 的实例
+
+    生成器函数执行：
+        不会立即把函数执行
+        而是返回一个迭代器对象
+        当执行这个迭代器里面的 next 方法时，才会执行函数
+        返回 {done: true/false, value: any} 的对象
+
+    生成器函数作用：
+        基于返回的额迭代器对象里的 next 方法
+        控制函数中的代码一步步执行
+        每次执行 next 方法时，控制函数内代码执行，
+        直到遇到 yield 则结束，
+        返回一个 {done: false, value: yield 后面的值} 的对象
+        遇到 return 或者函数执行到最后时，
+        返回一个 {done: true, value: return 后面的值} 的对象
+        迭代器内部的 throw 方法可以抛出异常，终止代码执行
+        迭代器内部的 return 方法 相当于在函数执行时遇到 return
+        yield* 可以让我们进入另一个生成器函数中执行
+    
+    迭代器.next(N)：每次执行 next 方法时，
+    传递的值会作为上一个 yield 的返回值，
+*/
+const delay = (time) => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve(`延时 ${time} 毫秒`);
+        }, time);
+    });
+}
+const handle = function* () {
+    let value = yield delay(1000); 
+    console.log(value); // 输出：延时 1000 毫秒
+    value = yield delay(2000);
+    console.log(value); // 输出：延时 2000 毫秒
+    value = yield delay(3000);
+    console.log(value); // 输出：延时 3000 毫秒
+    value = yield delay(4000);
+    console.log(value); // 输出：延时 4000 毫秒
+}
+// 参数 generator： 生成器函数
+const AsyncFunction = function AsyncFunction(generator, ...params) {
+    let itor = generator(...params);
+    // 基于递归，将 gengerator 中的代码逐一执行
+    const next = x => {
+        let { done, value } = itor.next(x);
+        // 如果 done 为 true，说明函数执行完毕
+        if (done) return value;
+        // 如果值不是 Promise，则将其转换为 Promise
+        if (!(value instanceof Promise)) value = Promise.resolve(value);
+        // 递归执行 next 方法
+        value.then(next);
+    }
+    next();
+}
+AsyncFunction(handle);
+
+```
+
+##### 六十二，UmiJs
+
+```js
+创建命令：
+	pnpm dlx create-umi@latest
+
+设置环境变量：
+	在根目录下的 .env 文件
+    HOST = 127.0.0.1 // 地址
+	PORT = 3000 // 端口号
+```
+
+##### 六十三，Umi4 配置
+
+```
+在根目录下创建 config 文件夹，在里面创建 config.ts 文件
 ```
 
