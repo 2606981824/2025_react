@@ -2878,7 +2878,733 @@ AsyncFunction(handle);
 
 ##### 六十三，Umi4 配置
 
-```
+```ts
 在根目录下创建 config 文件夹，在里面创建 config.ts 文件
+import { defineConfig } from '@umijs/max';
+import routes from '../src/routes/routes';
+export default defineConfig({
+    antd: {
+        theme: {
+            '@primary-color': '#6E48C2', //修改主题⾊
+        },
+    },
+    layout: {
+        name: 'Demo', //1. 配置项⽬名称
+        logo: 'https://preview.pro.ant.design/static/logo.f0355d39.svg',
+        title: 'Demo',
+    },
+    access: {},
+    model: {},
+    initialState: {},
+    request: {},
+    routes, // 路由
+    npmClient: 'pnpm',
+    hash: true, // 是否开启 hash 路由
+    history: { type: 'browser', }, // 设置路由 history 类型
+    devtool: false, // 关闭所有环境下的 sourcemap
+    externals: {}, // 设置不打包模块
+    headScripts: [], // 配置 <head> 中的额外 script，减少打包后主 JS 的大小
+    scripts: [], // 配置 <body> 中额外的 script 标签
+    // 修改 webpack 配置
+    chainWebpack(memo, { env, webpack }) {
+        // memeo:现有的 webpack 配置
+        // env: 当前环境变量
+        // webpack: webpack 对象
+        return memo;
+    },
+    plugins: [], // 配置额外的插件
+    extraBabelPlugins: [], // 配置额外的 babel 插件
+    extraBabelIncludes: [], // 配置额外的 babel 编译的 NPM 包或目录
+    extraBabelPresets: [], // 配置额外的 babel 插件集
+    extraPostCSSPlugins: [], // 配置额外的 postcss 插件
+    publicPath: "/", // 设置打包后资源导入的路径，默认值 /，
+    proxy: {}, // 代理
+    alias: { '@': './src', }, // 配置别名
+    analyze: true,// 开启构建分析
+    locale: {
+        default: 'zh-CN', // 默认语言
+        antd: true, // 是否启用 Ant Design 的国际化
+        title: false, // 在项目中配置的 title 及路由中的 title 可直接使用国际化 key，自动被转成对应语言的文案
+        baseNavigator: false, // 开启浏览器语言检测。
+    },
+    // 配置图片文件是否走 base64 编译的阈值。
+    // 默认是 10000 字节，少于他会被编译为 base64 编码，
+    // 否则会生成单独的文件
+    inlineLimit: 10000,
+    // 配置构建时压缩 JavaScript 的工具，默认值 esbuild
+    jsMinifier: 'esbuild',
+    jsMinifierOptions: {}, // jsMinifier 的配置项
+    metas: [], // 配置额外的 meta 标签
+    polyfill: {}, // 设置按需引入的 polyfill。默认全量引入。
+    targets: {}, // 配置需要兼容的浏览器最低版本
+
+});
+
+```
+
+##### 六十三，Umi 运行时配置
+
+```ts
+在 app.ts 文件中
+// 运行时配置
+import { RunTimeLayoutConfig } from "./.umi/exports";
+export type InitialStateProps = {
+  name: string;
+  collapsed?: boolean;
+};
+// 全局初始状态和配置
+export async function getInitialState(): Promise<InitialStateProps> {
+  return { name: '@umijs/max' };
+}
+// 布局及菜单配置
+// 可参考：https://procomponents.ant.design/components/layout#prolayout
+export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) => {
+  // initialState： 全局初始化数据
+  // setInitialState： 更新 initialState
+  // 自定义侧边栏展开状态
+  const onCollapse = (collapsed: boolean): void => {
+    setInitialState({ ...initialState, collapsed }).then();
+  };
+
+  let config: Record<string, any> = {
+    ...initialState,
+    title: 'Demo',
+    logo: 'https://img.alicdn.com/tfs/TB1YHEpwUT1gK0jSZFhXXaAtVXa-28-27.svg',
+    navTheme: 'light',  // 导航栏主题，'light' 或 'dark'
+    primaryColor: '#1890ff',  // 主色调
+    headerHeight: 48,   // 头部高度
+    fixedHeader: true,  // 是否固定头部
+    fixSiderbar: true,  // 是否固定侧边栏
+    contentWidth: 'Fluid',  // 内容宽度，'Fluid' 为流式，'Fixed' 为固定宽度
+    splitMenus: false,  // 是否启用菜单分割（多个菜单栏）
+    // menu 菜单配置
+    menu: {
+      locale: false,  // 是否启用菜单的国际化
+      disableLocal: false,  // 是否禁用本地菜单
+    },
+    headerRender: false,  // 是否显示头部
+    headerContentRender: () => { },  // 自定义头部内容
+    siderWidth: 250,  // 侧边栏宽度
+    collapsedButtonRender: false, // 去掉系统自带 collapsed 按钮
+    // 配置 collapsed, 值为 false 时，侧边栏不会自动折叠
+    collapsed: initialState?.collapsed,
+    rightContentRender: () => { }, //  自定义右侧内容
+    footerRender: () => { },  // 自定义底部内容
+    footerProps: { style: { textAlign: 'center' } },  // 自定义底部样式
+    // 页面切换时触发
+    onPageChange: (location) => {
+      // location： 当前路由信息
+    },
+    // 自定义渲染内容
+    childrenRender: (children) => {
+      // children： 子路由
+    },
+  };
+  // layout 的头像设置，不同的
+  if (initialState?.头像) {
+     config['avatarProps'] = {
+       	src: initialState?.头像,
+		size: 大小,
+       	title: initialState?.用户名称,
+       	render: (props, dom) => {
+         	return < {组件 ...props} >{dom}</组件>;
+       },
+     };
+   } else {
+    config['avatarProps'] = {
+       src: 默认头像,
+       size: 大小,
+       title: initialState?.默认用户名,
+       render: (props, dom) => {
+         return <组件 {...props} >{dom}</组件>;
+       },
+     };
+  }
+  return config;
+};
+// 初始加载和每次路由切换时加载
+export const onRouteChange = ({ clientRoutes, location, routes }) => {
+  // clientRoutes： 当前匹配的路由配置项
+  // location： 当前路由信息
+  // routes： 路由表，扁平化后的
+}
+// 动态路由，修改渲染前的路由表
+export const patchClientRoutes = ({ routes }) => {
+  // routes： 路由列表
+}
+// 自定义渲染
+export const render = (oldRender) => {
+  // oldRender： 原始渲染函数
+  oldRender()
+}
+```
+
+##### 六十四，Ant Design Pro 创建 Umi4 
+
+```ts
+命令：
+	npm i @ant-design/pro-cli -g // 如果全局安装了，则不需要此命令
+	pro create 项目名称
+    npm i
+    官网：https://pro.ant.design/zh-CN/docs/getting-started
+```
+
+##### 六十五，webpack 打包原理
+
+```js
+webpack 其实就是一个平台，在平台中，我们会安装/融入配置各种打包规则
+	mode: 打包模式（开发环境 development，生产环境 production）
+    entry: 入口（webpack 就是从入口开始，根据 CommonJs/Es6module 模块规范化，分析出模块之间的依赖，从而按照相关的依赖关系，进行打包）
+    output: 出口
+    loader: 加载器（一般都是用于实现代码编写的）
+    plugin: 插件
+    resolve: 解析器
+    optimization: 优化项
+```
+
+##### 六十六，强缓存以及协商缓存<img src="./浏览器缓存.png" alt="浏览器缓存.png" >
+
+##### 六十七，useTransition 18版本和19版本区别
+
+```tsx
+作用：将一段逻辑处理标记为低优先级，等待其他逻辑都处理完后，在进行处理，主要影响的是密集型的渲染工作，延迟的不是状态更新本身，而是由状态更新触发的重渲染过程
+18版本
+	useTransition:
+		直接调用返回一个数组
+        数组的第一个元素是渲染的状态，true/false
+		数组的第二个元素是一个方法
+        方法接收一个回调函数，所有在回调执行的逻辑优先级都比较低，回调函数不能是异步函数
+        
+    基础用法：
+    	import React, { useState, useTransition } from 'react';
+		const C = (props) => {
+    		const [isPending, startTransition] = useTransition();
+    		const [arr, setArr] = useState([
+        		{
+            		name: 'tab1',
+            		active: true,
+        		},
+        		{
+            		name: 'tab2',
+            		active: false
+        		},
+        		{
+            		name: 'tab3',
+            		active: false
+        		},
+    		])
+    		const [index, setIndex] = useState(0);
+    		const change = (index) => {
+        		startTransition(() => {
+            		setIndex(index)
+        		})
+        		setArr((pre) => {
+            		return pre.map((item, i) => {
+                		if (i === index) {
+                    		item.active = true
+                		} else {
+                    		item.active = false
+                		}
+                		return item
+            		})
+        		})
+    		}
+    		return (
+        		<div>
+            		<div>
+                		{
+                    		arr.map((item, index) => {
+                        		return (
+                            		<div
+                                		key={index}
+                                		style={{
+                                    		background: item.active ? "#ccc" : "#fff"
+                                		}}
+                                		onClick={() => change(index)}
+                           	 		>
+                                		{item.name}
+                            		</div>
+                        		)
+                    		})
+                		}
+            		</div>
+            		{index === 0 && <div>我是0</div>}
+            		{index === 1 && <div>
+                		{
+                    		new Array(50000).fill(0).map((item, index) => {
+                        		return <div key={index}>我是{index}</div>
+                    		})
+                		}
+            		</div>}
+            		{index === 2 && <div>我是2</div>}
+        		</div>
+    		);
+		}
+		export default C;
+
+    19版本
+    	useTransition:
+			直接调用返回一个数组
+        	数组的第一个元素是渲染的状态，true/false
+			数组的第二个元素是一个方法
+        	方法接收一个回调函数，所有在回调执行的逻辑优先级都比较低，回调函数可以是异步函数
+            
+            import React, { useState, useTransition } from 'react';
+			const C = (props) => {
+    		const [name, setName] = useState('');
+    		const [isLoading, setTransition] = useTransition();
+    		const sub = async () => {
+        		setTransition(async () => {
+            		try {
+                		const res = await fetch("/zhi/news/latest")
+                		const data = await res.json()
+            		} catch (error) {
+                	console.log(error)
+            		}
+        		})
+    		}
+    		return (
+        		<div>
+            		<input type="text" value={name} onChange={(e) => setName(e.target.value)} />
+            		<button onClick={sub} disabled={isLoading}>{isLoading ? '加载中' : '提交'}</button>
+            		<h1>{name}</h1>
+        		</div>
+    		);
+		}
+		export default C;
+
+ 19版本相比18版本，useTransition 接收的回调函数可以是异步函数
+```
+
+##### 六十八，useActionState 19版本
+
+```tsx
+useActionState
+	接收三个参数：
+    	参数一：回调函数，可以接收多个参数，参数一是上一次的返回值，参数二以及后面的参数，被调用传进来的参数
+        参数二：初始值
+        参数三(可选)：一个字符串，包含此表单修改的唯一页面 URL
+    调用返回一个数组
+    	元素一：参数一回调函数的返回值
+        元素二：方法，调用时，传入的参数是参数一回调函数的参数二以及后面的参数
+        元素三：元素渲染的状态 true/false
+        
+        调用方法必须放在 startTransition 方法内
+        
+```
+
+<img src="./useActionState.png" alt="useActionState.png" >
+
+##### 六十九，useActionState 结合 From 表单使用
+
+```tsx
+import React, { useState, useActionState } from 'react';
+const C = (props) => {
+    const [data, sub, isLoading] = useActionState(async (pre, formData) => {
+        console.log(formData.get('name'))
+        console.log(formData.get('age'))
+        console.log(formData.get('sex'))
+        try {
+            const res = await fetch("/zhi/news/latest")
+            const data = await res.json()
+            return data
+        } catch (error) {
+            return error
+        }
+    }, null)
+    return (
+        <div>
+            <form action={sub}>
+                <input type="text" name="name" />
+                <input type="text" name="age" />
+                <input type="text" name="sex" />
+                <button type='submit' disabled={isLoading} >{isLoading ? '加载中' : '提交'}</button>
+            </form>
+            <div>{JSON.stringify(data)}</div>
+        </div>
+    );
+}
+export default C;
+
+useActionState:
+	返回的方法作为 from 的 action, button 的 type 属性改为 submit,
+    点击按钮时会自动执行 useActionState 第一个参数的回调函数内逻辑，
+    input 这种 name 属性
+    在回调函数的第二参数，xxx.get('xxx') 可以拿到 input 对应的值
+  
+作用：
+	from 的 action 直接接收一个 actions 函数，
+    不要定义表单数据，不需要定义表单事件，
+    表单可以自动重置，清空
+    
+```
+
+##### 七十，useOptimistic 乐观更新
+
+```tsx
+作用：在异步操作期间(如网络请求)，先按照预估的正确结果显示了，实际异步操作还在后台执行中，如果失败了，预估值会自动回滚成真实值
+	
+useOptimistic(初始值，回调函数)
+	参数一: 初始值
+	参数二: 回调函数(旧值，传过来的新值)，返回旧值和新值合并的值
+	返回值: 数组
+		[返回的新值，添加新值的方法] 
+		添加新值的方法需要方法startTransition 执行
+		
+	import React, { useOptimistic, useState, startTransition } from 'react';
+	const C = (props) => {
+    	const [data, setData] = useState([{
+        	title: '张三',
+        	id: 18,
+    	}])
+    	const [newData, addData] = useOptimistic(data, (oldV, newV) => {
+        	return [...oldV, newV]
+    	})
+    	const add = (newV) => {
+        	startTransition(async () => {
+            	// 更新预估数据
+            	addData(newV);
+            	newV = await new Promise((resolve,reject)=>{
+                	setTimeout(()=>{
+                    	resolve({
+                        	title: '刘五',
+                        	id: 22
+                    	})
+                	},2000)
+            	})
+            	// 更新真实数据
+            	setData((oldV) => {
+                	return [...oldV, newV]
+            	})
+        	})
+    	}
+    	return (
+        	<div>
+            	{
+                	newData.map((item, index) => {
+                    	return (
+                        	<div key={index} >
+                            	<span>{item.title}</span>
+                            	<span>{item.id}</span>
+                        	</div>
+                    	)
+                	})
+            	}
+            	<button onClick={() => {
+                	add({
+                    	title: '李四',
+                    	id: 20
+                	})
+            	}} >添加</button>
+        	</div>
+    	);
+	}
+	export default C;
+```
+
+##### 七十一，useFormStatus 19版本(react-dom 提供)
+
+```tsx
+作用：
+	子组件可以拿到离它最近父级 form 组件的数据
+    
+const { pending, data, method, action } = useFormStatus();
+	
+	pending: 布尔值
+		如果为 true, 则表示父级 <form> 正在等待提交，否则为 false
+		
+	data: 实现了 FormData interface 的对象，包含父级 <form> 正在提交的数据，
+			如果没有进行提交或没有父级 <form>，它将为 null
+			
+	method: 字符串，可以是 'get' 或 'post'
+			表示父级 <form> 使用 GET 或 POST HTTP 方法进行提交
+			默认情况下，<form> 将使用 GET 方法，并可以通过 method 属性指定
+	
+	action: 一个传递给父级 <form> 的 action 属性的函数引用
+			如果没有父级 <form>, 则该属性为 null
+			如果 action 属性上提供了 URI 值，或者未指定 action 属性，status.action 将为 null
+
+import React from 'react';
+import { useFormStatus } from 'react-dom'
+
+const Button = (props) => {
+    let { type } = props;
+    const { pending, data, method, action } = useFormStatus();
+    console.log(pending, data?.get('name'), method, action)
+    return <button type={type} disabled={pending}>{pending ? 'loading....' : 'submit'}</button>
+}
+const C = (props) => {
+    return (
+        <div>
+            <form
+                action={() => {
+                    new Promise((resolve, reject) => {
+                        setTimeout(() => {
+                            resolve('success')
+                        }, 2000)
+                    })
+                }}
+            >
+                <input type="text" name="name" />
+                <Button type="submit" />
+            </form>
+        </div>
+    );
+}
+export default C;
+
+注释：
+	只要 Button 组件在 form 标签中
+    可以通过 useFormStatus 拿到 form 表单的提交状态（pending）
+    以及 form 表单的 input数据，提交表单的接口协议（get/put/post....）
+    还有 form 表单的 action (提交接口)
+```
+
+##### 七十二，use
+
+```tsx
+use 是一个 React API, 它可以让你读取类似于 Promise 或 context 的资源的值
+而且还可以在条件语句以及循环中使用
+
+读取 promise 结果
+	当使用 Promise 调用 use API 时，它会与 Suspense 和 错误边界 集成
+	请求接口必须放在函数组件外执行，否则会导致死循环
+	
+import React, { use } from 'react';
+
+const dataPromise = new Promise((resolve, reject) => {
+    resolve('张三')
+})
+const C = (props) => {
+    const data = use(dataPromise)
+    return (
+        <div>
+            {JSON.stringify(data)}
+        </div>
+    );
+}
+export default C;
+
+
+替代 useContext hooks 函数
+import React, { use, useContext } from 'react';
+import ContextObject from "@/utils/ContextObject";
+const C = (props) => {
+    const data = use(ContextObject)
+    return (
+        <div>
+            {JSON.stringify(data)}
+        </div>
+    );
+}
+export default C;
+
+	
+	
+```
+
+##### 七十三，ErrorBoundary 错误边界
+
+```tsx
+安装 react-error-boundary
+命令 npm i react-error-boundary
+使用 ErrorBoundary 组件包裹组件即可，会自动捕获到错误
+```
+
+<img src="./ErrorBoundary.png" alt="ErrorBoundary.png" >
+
+##### 七十四，useRef 19版本
+
+```tsx
+简化了 ref 的值传递给子组件，不需要再使用 forwardRef
+
+子父传参
+	import React, { useEffect, useRef, useImperativeHandle } from 'react'
+	function Index() {
+    	const a = useRef(null)
+    	useEffect(() => {
+        	console.log(a.current.name)
+    	})
+    	return (
+        	<div>
+            	<A ref={a} />
+        	</div>
+    	)
+	}
+	const A = (porps) => {
+    	useImperativeHandle(porps.ref, () => {
+        	return {
+            	name: 'test',
+        	}
+    	})
+    	return <div >hello</div>
+	}
+	export default Index
+
+获取子组件标签
+	import React, { useEffect, useRef } from 'react'
+	function Index() {
+    	const a = useRef(null)
+    	useEffect(() => {
+        	console.log(a.current)
+    	})
+    	return (
+        	<div>
+            	<A ref={a} />
+        	</div>
+    	)
+	}
+	const A = (porps) => {
+    	return <div ref={porps.ref}>hello</div>
+	}
+	export default Index
+	
+```
+
+##### 七十五，context 19版本
+
+```tsx
+可以省去 Provider
+
+创建一个 Context 上下文
+	import React from 'react';
+	const ContextObject = React.createContext();
+	export default ContextObject;
+
+使用 Context 上下文
+	import React, { useEffect } from "react";
+    import ContextObject from "@/utils/ContextObject";
+    export default function App() {
+      return (
+        <>
+            <ContextObject value={{
+              theme: "light",
+            }}>
+              <App />
+            </ContextObject>
+        </>
+      );
+    }
+
+组件获取到 context 上下文
+	import React, { use, useContext } from 'react';
+	import ContextObject from "@/utils/ContextObject";
+	const C = (props) => {
+    	const { theme } = useContext(ContextObject)
+    	const { theme: data } = use(ContextObject)
+    	console.log(theme, data)
+    	return (
+        	<div>
+            	{JSON.stringify(data)}
+        	</div>
+    	);
+	}
+	export default C;
+
+```
+
+##### 七十六，支持文档元数据 19版本
+
+```tsx
+import React from 'react';
+const B = () => {
+    return (
+        <div>
+            <article>
+                <title>456</title>
+                <meta name="author" content="Josh" />
+                <link rel="author" href="https://twitter.com/joshcstory/" />
+                <meta name="keywords" content={789} />
+            </article>
+        </div>
+    );
+}
+export default B;
+```
+
+##### 七十七，refs 支持清理函数 19版本
+
+```tsx
+19 版本之前，需要在 useEffect 中返回的函数中清除事件监听
+现在可以在 ref 函数返回的函数中进行清除
+
+import React, { useEffect, useState, useRef } from 'react';
+const B = () => {
+    const [show, setShow] = useState(false);
+    const setRef = (ref) => {
+        if (ref) {
+            const handler = () => console.log('点击');
+            ref.addEventListener('click', handler);
+            // 在组件卸载时调用
+            return ()=>{
+                // 清除事件监听
+                ref.removeEventListener('click', handler);
+            }
+        }
+    };
+    return (
+        <div>
+            <button onClick={() => {
+                setShow(!show)
+            }}>{show ? '显示' : '隐藏'}</button>
+            {
+                show && <button ref={setRef}>按钮</button>
+            }
+        </div>
+    );
+}
+export default B;
+
+```
+
+##### 七十八，useDefferredValue  延迟更新 19版本
+
+```tsx
+作用：
+	延迟某些更新的渲染，避免数据变化阻塞用户界面
+    本质是是把这个状态引起的渲染变成低优先级任务
+	
+18版本
+	const deferredValue = useDeferredValue(value);
+		value: 希望延迟更新的状态或值
+    	deferredValue: 延迟更新后的值
+	
+	import React, { useState, useDeferredValue } from 'react';
+	function SearchComponent() {
+    	const [query, setQuery] = useState('');
+    	const deferredQuery = useDeferredValue(query);
+    	const handleChange = (event) => {
+        	setQuery(event.target.value);
+    	};
+    	return (
+        	<div>
+            	<input
+                	type="text"
+                	value={query}
+                	onChange={handleChange}
+            	/>
+            	{/* 渲染过程中不会阻塞 input 输入框的操作 */}
+            	{
+                	new Array(5000).fill(0).map((_, index) => (
+                    	<p key={index}>{deferredQuery}</p>
+                	))
+            	}
+        	</div>
+    	);
+	}	
+	export default SearchComponent;
+
+19版本
+	const deferredValue = useDeferredValue(value,initiaValue?);
+		value: 希望延迟更新的状态或值
+    	deferredValue: 延迟更新后的值
+        initiaValue: 可选，组件初始渲染时使用的值，如果没有传，在初始渲染期间不会延迟
+```
+
+##### 七十九，React 并发更新
+
+```
+1. fiber 架构：数据结构
+2. 浏览空闲时间
 ```
 

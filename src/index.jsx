@@ -8,9 +8,10 @@ import "dayjs/locale/zh-cn";
 import '@ant-design/v5-patch-for-react-19';
 import store from "./store";	//引入store文件
 import { Provider } from "react-redux"; //引入Provider
+import ContextObject from "@/utils/ContextObject";
 
-import './utils/Iterator'
-import './utils/Generator'
+// import './utils/Iterator'
+// import './utils/Generator'
 
 // REN
 // import 'lib-flexible';
@@ -32,7 +33,14 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <ConfigProvider locale={zhCN} >
     <Provider  store={store}>
-    <App />
+      <ContextObject
+        value={{
+           theme: "light",
+        }}
+      >
+        <App />
+      </ContextObject>
+    
     </Provider>
   </ConfigProvider>,
 );
